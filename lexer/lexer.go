@@ -22,7 +22,17 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '=':
-		tok = token.NewToken(token.ASSIGN, '=')
+		if l.isTwoCharToken('=', '=') {
+			tok = token.Token{Type: token.EQ, Literal: l.readTwoCharToken()}
+		} else {
+			tok = token.NewToken(token.ASSIGN, '=')
+		}
+	case '!':
+		if l.isTwoCharToken('!', '=') {
+			tok = token.Token{Type: token.NOT_EQ, Literal: l.readTwoCharToken()}
+		} else {
+			tok = token.NewToken(token.BANG, '!')
+		}
 	case '+':
 		tok = token.NewToken(token.PLUS, '+')
 	case '-':
@@ -31,8 +41,6 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.NewToken(token.ASTERISK, '*')
 	case '/':
 		tok = token.NewToken(token.SLASH, '/')
-	case '!':
-		tok = token.NewToken(token.BANG, '!')
 	case '<':
 		tok = token.NewToken(token.LT, '<')
 	case '>':
@@ -53,7 +61,6 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default: // 識別子・キーワード・数について
-
 		// 変数 or Keyword
 		if isIdentifierLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
@@ -75,6 +82,7 @@ func (l *Lexer) NextToken() token.Token {
 }
 
 // 次の一文字を読む & 現在位置を進める
+// => l.ch が更新される
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
 		l.ch = 0 // ASCII "NUL" に対応している
@@ -83,6 +91,14 @@ func (l *Lexer) readChar() {
 	}
 	l.position = l.readPosition
 	l.readPosition++
+}
+
+// 次の一文字を先読みする
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	}
+	return l.input[l.readPosition]
 }
 
 // 変数の識別子を取得する
@@ -100,6 +116,18 @@ func (l *Lexer) readNumber() string {
 		l.readChar()
 	}
 	return l.input[p:l.position]
+}
+
+func (l *Lexer) isTwoCharToken(c1, c2 byte) bool {
+	return l.ch == c1 && l.peekChar() == c2
+}
+
+// 2文字からなるトークンを読み込む
+// 先に isTwoCharToken を呼び出してチェックする
+func (l *Lexer) readTwoCharToken() string {
+	ch := l.ch
+	l.readChar()
+	return string(ch) + string(l.ch)
 }
 
 func (l *Lexer) skipWhitespace() {

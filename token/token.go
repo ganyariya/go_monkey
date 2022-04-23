@@ -3,6 +3,7 @@ package token
 type TokenType string
 
 /*
+「タイプ」を識別するための値（右側の値）
 大事なのは左側の「トークンタイプ」で右に何が入っているかは重要ではない
 lexer などで必ず `token` package を引いて
 `token.ILLEGAL` のように使うので `ILLEGAL = illEGAL` のようにしても問題はない（なんなら ILLEGAL = 43 でもいい）
@@ -53,8 +54,8 @@ const (
 { Type = "IDENT", Literal = "xyZ" } // 変数名などは実際の値が入る
 */
 type Token struct {
-	Type    TokenType
-	Literal string
+	Type    TokenType // const の右辺値が入る
+	Literal string    // ソースコードにおける実際の値が入る
 }
 
 func NewToken(tokenType TokenType, ch byte) Token {
@@ -71,7 +72,7 @@ var keywords = map[string]TokenType{
 	"false":  FALSE,
 }
 
-// キーワードか調べて「タイプ」を返す
+// リテラルの値からその値がキーワードか調べて「タイプ」を返す
 // `IDENT` が帰ってきたら「変数の識別子」
 func LookupIdentifier(identifier string) TokenType {
 	if tok, ok := keywords[identifier]; ok {
