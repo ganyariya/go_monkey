@@ -50,6 +50,7 @@ const (
 
 /*
 { Type = "ASSIGN", Literal = "=" }
+{ Type = "IDENT", Literal = "xyZ" } // 変数名などは実際の値が入る
 */
 type Token struct {
 	Type    TokenType

@@ -25,6 +25,18 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.NewToken(token.ASSIGN, '=')
 	case '+':
 		tok = token.NewToken(token.PLUS, '+')
+	case '-':
+		tok = token.NewToken(token.MINUS, '-')
+	case '*':
+		tok = token.NewToken(token.ASTERISK, '*')
+	case '/':
+		tok = token.NewToken(token.SLASH, '/')
+	case '!':
+		tok = token.NewToken(token.BANG, '!')
+	case '<':
+		tok = token.NewToken(token.LT, '<')
+	case '>':
+		tok = token.NewToken(token.GT, '>')
 	case '(':
 		tok = token.NewToken(token.LPAREN, '(')
 	case ')':
@@ -48,6 +60,10 @@ func (l *Lexer) NextToken() token.Token {
 			// リテラルから「変数」か「Keyword」か調べる
 			tok.Type = token.LookupIdentifier(tok.Literal)
 			return tok
+		} else if isDigit(l.ch) {
+			tok.Type = token.INT
+			tok.Literal = l.readNumber()
+			return tok
 		} else {
 			// 失敗したら ILLEGAL トークンを埋め込むことで、テストなどでエラーを発見しやすくする
 			tok = token.NewToken(token.ILLEGAL, l.ch)
@@ -56,15 +72,6 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.readChar()
 	return tok
-}
-
-// 変数の識別子を取得する
-func (l *Lexer) readIdentifier() string {
-	p := l.position
-	for isIdentifierLetter(l.ch) {
-		l.readChar()
-	}
-	return l.input[p:l.position]
 }
 
 // 次の一文字を読む & 現在位置を進める
@@ -78,6 +85,23 @@ func (l *Lexer) readChar() {
 	l.readPosition++
 }
 
+// 変数の識別子を取得する
+func (l *Lexer) readIdentifier() string {
+	p := l.position
+	for isIdentifierLetter(l.ch) {
+		l.readChar()
+	}
+	return l.input[p:l.position]
+}
+
+func (l *Lexer) readNumber() string {
+	p := l.position
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[p:l.position]
+}
+
 func (l *Lexer) skipWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
@@ -87,4 +111,8 @@ func (l *Lexer) skipWhitespace() {
 // 変数の識別子として利用できる文字
 func isIdentifierLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func isDigit(ch byte) bool {
+	return '0' <= ch && ch <= '9'
 }
