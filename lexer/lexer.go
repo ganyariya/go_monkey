@@ -49,6 +49,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Type = token.LookupIdentifier(tok.Literal)
 			return tok
 		} else {
+			// 失敗したら ILLEGAL トークンを埋め込むことで、テストなどでエラーを発見しやすくする
 			tok = token.NewToken(token.ILLEGAL, l.ch)
 		}
 	}
