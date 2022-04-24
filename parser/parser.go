@@ -65,6 +65,7 @@ func (p *Parser) parseLetStatement() ast.Statement {
 		return nil
 	}
 
+	// TODO: セミコロンにたどり着くまで読み飛ばしている（本当はここで x = Expression の「式」をパースする必要がある）
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}

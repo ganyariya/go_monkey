@@ -17,7 +17,7 @@ type Expression interface {
 */
 type IdentifierExpression struct {
 	Token token.Token // token.IDENTIFIER
-	Value string
+	Value string      // xyZ などの変数名
 }
 
 func (i *IdentifierExpression) TokenLiteral() string { return i.Token.Literal }

@@ -2,6 +2,7 @@ package lexer
 
 import "github.com/ganyariya/go_monkey/token"
 
+// レキサー
 type Lexer struct {
 	input        string
 	position     int  // 常に、現在 ch に入っている文字の位置を指す
