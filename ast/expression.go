@@ -22,3 +22,4 @@ type IdentifierExpression struct {
 
 func (i *IdentifierExpression) TokenLiteral() string { return i.Token.Literal }
 func (i *IdentifierExpression) expressionNode()      {}
+func (i *IdentifierExpression) String() string       { return i.Value }
