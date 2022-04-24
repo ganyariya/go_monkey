@@ -13,8 +13,8 @@ const (
 	EOF     = "EOF"
 
 	// 識別子 & リテラル
-	IDENT = "IDENT"
-	INT   = "INT"
+	IDENTIFIER = "IDENTIFIER"
+	INT        = "INT"
 
 	// 演算子
 	ASSIGN   = "ASSIGN"
@@ -78,5 +78,5 @@ func LookupIdentifier(identifier string) TokenType {
 	if tok, ok := keywords[identifier]; ok {
 		return tok
 	}
-	return IDENT
+	return IDENTIFIER
 }
