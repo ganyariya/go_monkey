@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/ganyariya/go_monkey/ast"
 	"github.com/ganyariya/go_monkey/lexer"
 	"github.com/ganyariya/go_monkey/token"
@@ -10,10 +12,11 @@ type Parser struct {
 	l         *lexer.Lexer
 	curToken  token.Token // 今見ているトークン
 	peekToken token.Token // 先読みトークン
+	errors    []string
 }
 
 func NewParser(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{l: l, errors: []string{}}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -30,7 +33,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	for p.curToken.Type != token.EOF {
+	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -76,12 +79,16 @@ func (p *Parser) parseLetStatement() ast.Statement {
 /*
 次のトークン（p.peekToken）が token.TokenType と一致しているか調べる
 一致しているならそれを読み出したいので curToken <- peekToken へ更新する
+
+アサーション関数と呼ばれ多くの構文解析器に存在する
+次に来るトークンとして「期待する型」をチェックし正しい場合のみトークンを次に進める
 */
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
 	} else {
+		p.peekError(t)
 		return false
 	}
 }
@@ -92,4 +99,13 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 
 func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead.", t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
 }
