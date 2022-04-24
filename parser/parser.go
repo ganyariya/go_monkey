@@ -8,11 +8,22 @@ import (
 	"github.com/ganyariya/go_monkey/token"
 )
 
+// トークンタイプにあう構文解析関数を最大 2 つ呼び AST ノードを返す
+type (
+	prefixParseFn func() ast.Expression
+	infixParseFn  func(ast.Expression) ast.Expression // 中置演算子の左側の式が () に入る
+)
+
 type Parser struct {
-	l         *lexer.Lexer
+	l      *lexer.Lexer
+	errors []string
+
 	curToken  token.Token // 今見ているトークン
 	peekToken token.Token // 先読みトークン
-	errors    []string
+
+	// トークンに対応する構文解析関数 map
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func NewParser(l *lexer.Lexer) *Parser {
@@ -110,15 +121,20 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 func (p *Parser) curTokenIs(t token.TokenType) bool {
 	return p.curToken.Type == t
 }
-
 func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
+}
+
+func (p *Parser) registerPrefixFn(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+func (p *Parser) registerInfixFn(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
 }
 
 func (p *Parser) Errors() []string {
 	return p.errors
 }
-
 func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead.", t, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
