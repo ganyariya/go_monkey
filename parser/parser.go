@@ -8,7 +8,25 @@ import (
 	"github.com/ganyariya/go_monkey/token"
 )
 
-// トークンタイプにあう構文解析関数を最大 2 つ呼び AST ノードを返す
+// 順序が重要（PRODUCT は EQUALS よりも高い優先順位）
+const (
+	_ int = iota
+	LOWEST
+	EQUALS      // ==
+	LESSGREATER // < or >
+	SUM         // +
+	PRODUCT     // *
+	PREFIX      // - or !
+	CALL        // func()
+)
+
+/*
+2.6.6 p60
+
+すべての構文解析関数（式を解析する関数が構文解析関数）は以下の規約に従う。
+- 「構文解析関数に関連付けられたトークンが p.curToken にセットされた状態で」関数の動作を開始する。
+- 「構文解析関数が処理対象とする式の一番最後のトークン」が curToken にセットされた状態で関数は終了する。
+*/
 type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(ast.Expression) ast.Expression // 中置演算子の左側の式が () に入る
@@ -28,6 +46,11 @@ type Parser struct {
 
 func NewParser(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
+
+	// 式を構文解析する prefixParseExpression をトークンタイプごとに登録する
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefixFn(token.IDENTIFIER, p.parseIdentifierExpression)
+
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -63,7 +86,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		// let return 以外は Expression のみからなる Statement
+		return p.parseExpressionStatement()
 	}
 }
 
@@ -100,6 +124,38 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 
 	return stmt
 }
+
+func (p *Parser) parseExpressionStatement() ast.Statement {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+	stmt.ExpressionValue = p.parseExpression(LOWEST)
+	// セミコロンを省略可能にする（セミコロンだったら飛ばす）
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefixFn := p.prefixParseFns[p.curToken.Type]
+	if prefixFn == nil {
+		return nil
+	}
+	leftExp := prefixFn()
+	return leftExp
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+func (p *Parser) parseIdentifierExpression() ast.Expression {
+	return &ast.IdentifierExpression{
+		Token: p.curToken,
+		Value: p.curToken.Literal,
+	}
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 /*
 次のトークン（p.peekToken）が token.TokenType と一致しているか調べる

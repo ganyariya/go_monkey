@@ -20,6 +20,6 @@ type IdentifierExpression struct {
 	Value string      // xyZ などの変数名
 }
 
-func (i *IdentifierExpression) TokenLiteral() string { return i.Token.Literal }
 func (i *IdentifierExpression) expressionNode()      {}
+func (i *IdentifierExpression) TokenLiteral() string { return i.Token.Literal }
 func (i *IdentifierExpression) String() string       { return i.Value }

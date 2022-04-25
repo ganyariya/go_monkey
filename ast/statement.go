@@ -49,9 +49,10 @@ func (rs *ReturnStatement) String() string {
 	return out.String()
 }
 
+// **式だけ**からなる Statement
 type ExpressionStatement struct {
 	Token           token.Token // 式に含まれる最初のトークン
-	ExpressionValue Expression
+	ExpressionValue Expression  // 式
 }
 
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
