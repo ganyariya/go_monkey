@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/ganyariya/go_monkey/token"
+import (
+	"fmt"
+
+	"github.com/ganyariya/go_monkey/token"
+)
 
 // 式
 type Expression interface {
@@ -34,3 +38,15 @@ type IntegerLiteralExpression struct {
 func (i *IntegerLiteralExpression) expressionNode()      {}
 func (i *IntegerLiteralExpression) TokenLiteral() string { return i.Token.Literal }
 func (i *IntegerLiteralExpression) String() string       { return i.Token.Literal } // for Debug
+
+type PrefixExpression struct {
+	Token    token.Token // token.MINUS, BANG
+	Operator string      // 前置演算子
+	Right    Expression  // 演算子の右にくる式
+}
+
+func (pe *PrefixExpression) expressionNode()      {}
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) String() string {
+	return fmt.Sprintf("(%s %s)", pe.Operator, pe.Right.String())
+}

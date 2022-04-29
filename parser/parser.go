@@ -52,6 +52,8 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefixFn(token.IDENTIFIER, p.parseIdentifierExpression)
 	p.registerPrefixFn(token.INT, p.parseIntegerLiteralExpression)
+	p.registerPrefixFn(token.BANG, p.parsePrefixExpression)
+	p.registerPrefixFn(token.MINUS, p.parsePrefixExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -140,6 +142,7 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefixFn := p.prefixParseFns[p.curToken.Type]
 	if prefixFn == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
 		return nil
 	}
 	leftExp := prefixFn()
@@ -166,6 +169,13 @@ func (p *Parser) parseIntegerLiteralExpression() ast.Expression {
 	}
 	ile.Value = value
 	return ile
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	pe := &ast.PrefixExpression{Token: p.curToken, Operator: p.curToken.Literal}
+	p.nextToken()                        // トークンを進めて式を読む
+	pe.Right = p.parseExpression(PREFIX) // 前置演算子の優先順位を渡す
+	return pe
 }
 
 // ----------------------------------------------------------------------------
@@ -207,5 +217,10 @@ func (p *Parser) Errors() []string {
 }
 func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead.", t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s", t)
 	p.errors = append(p.errors, msg)
 }
