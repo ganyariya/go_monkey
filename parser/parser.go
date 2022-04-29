@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/ganyariya/go_monkey/ast"
 	"github.com/ganyariya/go_monkey/lexer"
@@ -50,6 +51,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	// 式を構文解析する prefixParseExpression をトークンタイプごとに登録する
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefixFn(token.IDENTIFIER, p.parseIdentifierExpression)
+	p.registerPrefixFn(token.INT, p.parseIntegerLiteralExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -152,6 +154,18 @@ func (p *Parser) parseIdentifierExpression() ast.Expression {
 		Token: p.curToken,
 		Value: p.curToken.Literal,
 	}
+}
+
+func (p *Parser) parseIntegerLiteralExpression() ast.Expression {
+	ile := &ast.IntegerLiteralExpression{Token: p.curToken}
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	ile.Value = value
+	return ile
 }
 
 // ----------------------------------------------------------------------------

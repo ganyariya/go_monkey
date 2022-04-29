@@ -22,4 +22,15 @@ type IdentifierExpression struct {
 
 func (i *IdentifierExpression) expressionNode()      {}
 func (i *IdentifierExpression) TokenLiteral() string { return i.Token.Literal }
-func (i *IdentifierExpression) String() string       { return i.Value }
+func (i *IdentifierExpression) String() string       { return i.Value } // for Debug
+
+// Value が構文解析とそのあとで「実際に使う」値っぽい（整数に変換しているため）
+// Token はレキサーの時点で使うもの
+type IntegerLiteralExpression struct {
+	Token token.Token // token.INT
+	Value int64       // 5 (Token.Literal を変換する)
+}
+
+func (i *IntegerLiteralExpression) expressionNode()      {}
+func (i *IntegerLiteralExpression) TokenLiteral() string { return i.Token.Literal }
+func (i *IntegerLiteralExpression) String() string       { return i.Token.Literal } // for Debug
