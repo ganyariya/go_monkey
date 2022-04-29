@@ -162,6 +162,23 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 	return stmt
 }
 
+/*
+Note: p82
+parseExpression の precedence の値は右結合力を表す。
+一方、今見ている演算子に対して、「次の演算子の左結合力」は peekPrecedence の値になる。
+
+precedence の値が大きいほど（右結合力が高いほど）「文の直接1だけ右にあるトークンを Right に「直接」吸収しやすい」
+かつ「自身が `他の親ノードがもつ Left 子ノード`に配置されづらい」。
+`-1 + 2` で最初のマイナスを解析するとき PREFIX を parseExpression にわたす。
+このとき、 `1` は「直接」マイナスの　Right に吸収される。
+また、別の例として、 `*`の演算子における parseInfixExpression 内部で呼び出される parseExpression では
+precedence = PRODUCT の優先順位が渡され `*` は右結合力が大きい。
+
+precedence の値が小さいほど「これまで構文解析したものを自身の Left におき」かつ
+「自分は `別のノード（将来的に親となるノード）の Left（つまり自分は`トークン列で右に出てくる`Expressionノードの子供になる）` になりやすい」
+`2 + 4 + 3` の場合、 1 つ目のプラス（+1）を解釈したとき、この +1 までに解析したものは  +1 の Left に配置されやすい。
+また、 +1 は他のノードの Left に配置されやすい。（今回の場合 2 つ目のプラス(+2) の Left ノードになる）
+*/
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	// Statement に含まれる最も左側にある式を処理する
 	prefixFn := p.prefixParseFns[p.curToken.Type]
@@ -171,7 +188,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 	leftExp := prefixFn()
 
-	// セミコロンが来る　もしくは優先順位が上がらなくなったら
+	// セミコロンが来る もしくは 優先順位が上がらなくなったら
 	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
 		// 中間演算子の優先順位が高いなら中置演算子に紐付いた関数でパースする
 		infixFn := p.infixParseFns[p.peekToken.Type]
