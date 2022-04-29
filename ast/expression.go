@@ -28,7 +28,7 @@ func (i *IdentifierExpression) expressionNode()      {}
 func (i *IdentifierExpression) TokenLiteral() string { return i.Token.Literal }
 func (i *IdentifierExpression) String() string       { return i.Value } // for Debug
 
-// Value が構文解析とそのあとで「実際に使う」値っぽい（整数に変換しているため）
+// **Token 以外の値である** Value が構文解析とそのあとで「実際に使う」値っぽい（整数に変換しているため）
 // Token はレキサーの時点で使うもの
 type IntegerLiteralExpression struct {
 	Token token.Token // token.INT
@@ -48,5 +48,18 @@ type PrefixExpression struct {
 func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PrefixExpression) String() string {
-	return fmt.Sprintf("(%s %s)", pe.Operator, pe.Right.String())
+	return fmt.Sprintf("(%s%s)", pe.Operator, pe.Right.String())
+}
+
+type InfixExpression struct {
+	Token    token.Token // token.PLUS, ...
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) expressionNode()      {}
+func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *InfixExpression) String() string {
+	return fmt.Sprintf("(%s %s %s)", ie.Left.String(), ie.Operator, ie.Right.String())
 }

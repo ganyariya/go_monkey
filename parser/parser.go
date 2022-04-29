@@ -21,6 +21,18 @@ const (
 	CALL        // func()
 )
 
+// 中置演算子の優先順位
+var precedences = map[token.TokenType]int{
+	token.EQ:       EQUALS,
+	token.NOT_EQ:   EQUALS,
+	token.LT:       LESSGREATER,
+	token.GT:       LESSGREATER,
+	token.PLUS:     SUM,
+	token.MINUS:    SUM,
+	token.SLASH:    PRODUCT,
+	token.ASTERISK: PRODUCT,
+}
+
 /*
 2.6.6 p60
 
@@ -54,6 +66,16 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefixFn(token.INT, p.parseIntegerLiteralExpression)
 	p.registerPrefixFn(token.BANG, p.parsePrefixExpression)
 	p.registerPrefixFn(token.MINUS, p.parsePrefixExpression)
+
+	p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	p.registerInfixFn(token.PLUS, p.parseInfixExpression)
+	p.registerInfixFn(token.MINUS, p.parseInfixExpression)
+	p.registerInfixFn(token.SLASH, p.parseInfixExpression)
+	p.registerInfixFn(token.ASTERISK, p.parseInfixExpression)
+	p.registerInfixFn(token.EQ, p.parseInfixExpression)
+	p.registerInfixFn(token.NOT_EQ, p.parseInfixExpression)
+	p.registerInfixFn(token.LT, p.parseInfixExpression)
+	p.registerInfixFn(token.GT, p.parseInfixExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -129,9 +151,10 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 	return stmt
 }
 
+// セミコロンが来るまで「一つの大きな式」として ExpressionStatement をパースする
 func (p *Parser) parseExpressionStatement() ast.Statement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
-	stmt.ExpressionValue = p.parseExpression(LOWEST)
+	stmt.ExpressionValue = p.parseExpression(LOWEST) // 最も低い優先順位でパースする
 	// セミコロンを省略可能にする（セミコロンだったら飛ばす）
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -140,12 +163,26 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+	// Statement に含まれる最も左側にある式を処理する
 	prefixFn := p.prefixParseFns[p.curToken.Type]
 	if prefixFn == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
 		return nil
 	}
 	leftExp := prefixFn()
+
+	// セミコロンが来る　もしくは優先順位が上がらなくなったら
+	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
+		// 中間演算子の優先順位が高いなら中置演算子に紐付いた関数でパースする
+		infixFn := p.infixParseFns[p.peekToken.Type]
+		if infixFn == nil {
+			return leftExp
+		}
+		p.nextToken()
+		// 「これまで見ていた"中置演算子の左側にある"式」を「これから見る中間演算子式のLeft」として埋め込む
+		leftExp = infixFn(leftExp)
+	}
+
 	return leftExp
 }
 
@@ -174,8 +211,15 @@ func (p *Parser) parseIntegerLiteralExpression() ast.Expression {
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	pe := &ast.PrefixExpression{Token: p.curToken, Operator: p.curToken.Literal}
 	p.nextToken()                        // トークンを進めて式を読む
-	pe.Right = p.parseExpression(PREFIX) // 前置演算子の優先順位を渡す
+	pe.Right = p.parseExpression(PREFIX) // PrefixExpression は強制的に前置演算子の優先順位を渡す
 	return pe
+}
+func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	ie := &ast.InfixExpression{Token: p.curToken, Operator: p.curToken.Literal, Left: left}
+	precedence := p.curPrecedence()
+	p.nextToken()
+	ie.Right = p.parseExpression(precedence)
+	return ie
 }
 
 // ----------------------------------------------------------------------------
@@ -211,6 +255,15 @@ func (p *Parser) registerPrefixFn(tokenType token.TokenType, fn prefixParseFn) {
 func (p *Parser) registerInfixFn(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
+
+func getPrecedence(t token.TokenType) int {
+	if p, ok := precedences[t]; ok {
+		return p
+	}
+	return LOWEST
+}
+func (p *Parser) curPrecedence() int  { return getPrecedence(p.curToken.Type) }
+func (p *Parser) peekPrecedence() int { return getPrecedence(p.peekToken.Type) }
 
 func (p *Parser) Errors() []string {
 	return p.errors
