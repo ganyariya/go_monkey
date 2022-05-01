@@ -5,7 +5,16 @@ import (
 	"testing"
 
 	"github.com/ganyariya/go_monkey/ast"
+	"github.com/ganyariya/go_monkey/lexer"
 )
+
+func initParserProgram(t *testing.T, input string) (*Parser, *ast.Program) {
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	return p, program
+}
 
 func checkParserErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()

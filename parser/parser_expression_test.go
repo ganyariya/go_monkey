@@ -4,16 +4,12 @@ import (
 	"testing"
 
 	"github.com/ganyariya/go_monkey/ast"
-	"github.com/ganyariya/go_monkey/lexer"
 )
 
 func TestIdentifierExpressionTest(t *testing.T) {
 	input := "foobar;"
 
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	_, program := initParserProgram(t, input)
 
 	stmt := checkIsExpressionStatements(t, program, 1)
 
@@ -22,11 +18,7 @@ func TestIdentifierExpressionTest(t *testing.T) {
 
 func TestIntegerLiteralExpression(t *testing.T) {
 	input := "5;"
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
+	_, program := initParserProgram(t, input)
 	stmt := checkIsExpressionStatements(t, program, 1)
 	checkIsValidLiteralExpression(t, stmt.ExpressionValue, 5)
 }
@@ -41,11 +33,7 @@ func TestBooleanExpression(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		l := lexer.NewLexer(tt.input)
-		p := NewParser(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
-
+		_, program := initParserProgram(t, tt.input)
 		stmt := checkIsExpressionStatements(t, program, 1)
 		checkIsValidLiteralExpression(t, stmt.ExpressionValue, tt.expected)
 	}
@@ -64,11 +52,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 
 	for _, tt := range prefixTests {
-		l := lexer.NewLexer(tt.input)
-		p := NewParser(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
-
+		_, program := initParserProgram(t, tt.input)
 		stmt := checkIsExpressionStatements(t, program, 1)
 		checkIsValidPrefixExpression(t, stmt.ExpressionValue, tt.operator, tt.value)
 	}
@@ -103,11 +87,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 	}
 
 	for _, tt := range inputTexts {
-		l := lexer.NewLexer(tt.input)
-		p := NewParser(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
-
+		_, program := initParserProgram(t, tt.input)
 		stmt := checkIsExpressionStatements(t, program, 1)
 		if !checkIsValidInfixExpression(t, stmt.ExpressionValue, tt.leftValue, tt.operator, tt.rightValue) {
 			return
@@ -117,11 +97,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 
 func TestIfExpression(t *testing.T) {
 	input := `if (x < y) { x }`
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
+	_, program := initParserProgram(t, input)
 	stmt := checkIsExpressionStatements(t, program, 1)
 
 	exp, ok := stmt.ExpressionValue.(*ast.IfExpression)
@@ -153,12 +129,7 @@ func TestIfExpression(t *testing.T) {
 
 func TestIfElseExpression(t *testing.T) {
 	input := `if (x < y) { x } else { y }`
-
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
+	_, program := initParserProgram(t, input)
 	stmt := checkIsExpressionStatements(t, program, 1)
 
 	exp, ok := stmt.ExpressionValue.(*ast.IfExpression)
@@ -199,11 +170,7 @@ func TestIfElseExpression(t *testing.T) {
 
 func TestFunctionExpressionParsing(t *testing.T) {
 	input := `fn(x, y) {x + y;}`
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
+	_, program := initParserProgram(t, input)
 	stmt := checkIsExpressionStatements(t, program, 1)
 
 	function, ok := stmt.ExpressionValue.(*ast.FunctionExpression)
@@ -234,11 +201,7 @@ func TestFunctionExpressionParametersParsing(t *testing.T) {
 		{"fn(x,y,z){};", []string{"x", "y", "z"}},
 	}
 	for _, tt := range tests {
-		l := lexer.NewLexer(tt.input)
-		p := NewParser(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
-
+		_, program := initParserProgram(t, tt.input)
 		stmt := checkIsExpressionStatements(t, program, 1)
 		function := stmt.ExpressionValue.(*ast.FunctionExpression)
 
@@ -249,4 +212,26 @@ func TestFunctionExpressionParametersParsing(t *testing.T) {
 			checkIsValidLiteralExpression(t, function.Parameters[i], ident)
 		}
 	}
+}
+
+func TestCallExpressionParsing(t *testing.T) {
+	input := `add(1, 2 * 3, 4 + 5);`
+	_, program := initParserProgram(t, input)
+	stmt := checkIsExpressionStatements(t, program, 1)
+
+	exp, ok := stmt.ExpressionValue.(*ast.CallExpression)
+	if !ok {
+		t.Fatalf("Not ast.CallExpression. got=%T", stmt.ExpressionValue)
+	}
+
+	if !checkIsIdentifierExpression(t, exp.Function, "add") {
+		return
+	}
+	if len(exp.Arguments) != 3 {
+		t.Fatalf("exp.Arguments not 3. got=%d", len(exp.Arguments))
+	}
+
+	checkIsIntegerLiteralExpression(t, exp.Arguments[0], 1)
+	checkIsValidInfixExpression(t, exp.Arguments[1], 2, "*", 3)
+	checkIsValidInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }

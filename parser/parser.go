@@ -31,6 +31,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.LPAREN:   CALL,
 }
 
 /*
@@ -81,6 +82,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerInfixFn(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfixFn(token.LT, p.parseInfixExpression)
 	p.registerInfixFn(token.GT, p.parseInfixExpression)
+	p.registerInfixFn(token.LPAREN, p.parseCallExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -317,9 +319,8 @@ func (p *Parser) parseFunctionExpression() ast.Expression {
 	// 最後は curToken = } を指した状態で終了する
 	return fe
 }
-
-// `(` で開始し `)` で終了する
 func (p *Parser) parseFunctionParameters() []*ast.IdentifierExpression {
+	// `(` で開始し `)` で終了する
 	identifiers := []*ast.IdentifierExpression{}
 	p.nextToken()
 
@@ -333,6 +334,32 @@ func (p *Parser) parseFunctionParameters() []*ast.IdentifierExpression {
 		p.nextToken()
 	}
 	return identifiers
+}
+
+/*
+`(` の **infix** として登録される。
+これは add(x, y) や <fn(x, y){x+y}>(x, y) のように「式」のあとの中置演算 `(`（関数呼び出し）だからである。
+function には `add` のような IdentifierExpression か `fn(x, y){x+y}` のような FunctionExpression が入る。
+*/
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	call := &ast.CallExpression{Token: p.curToken, Function: function}
+	call.Arguments = p.parseCallArguments()
+	return call
+}
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+	p.nextToken()
+
+	for !p.curTokenIs(token.RPAREN) {
+		args = append(args, p.parseExpression(LOWEST))
+		if p.peekTokenIs(token.COMMA) {
+			p.nextToken()
+		} else if !p.peekTokenIs(token.RPAREN) {
+			return nil
+		}
+		p.nextToken()
+	}
+	return args
 }
 
 // ----------------------------------------------------------------------------
