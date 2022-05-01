@@ -68,6 +68,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefixFn(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefixFn(token.TRUE, p.parseBooleanExpression)
 	p.registerPrefixFn(token.FALSE, p.parseBooleanExpression)
+	p.registerPrefixFn(token.LPAREN, p.parseGroupedExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfixFn(token.PLUS, p.parseInfixExpression)
@@ -192,7 +193,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	// セミコロンが来る もしくは 優先順位が上がらなくなったら
 	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
-		// 中間演算子の優先順位が高いなら中置演算子に紐付いた関数でパースする
+		// 次の中間演算子の優先順位の方が高いなら次の中置演算子に紐付いた関数でパースする
 		infixFn := p.infixParseFns[p.peekToken.Type]
 		if infixFn == nil {
 			return leftExp
@@ -246,6 +247,18 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return ie
 }
 
+/*
+`(` で呼び出される。
+*/
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+	exp := p.parseExpression(LOWEST)
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	return exp
+}
+
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
@@ -280,6 +293,7 @@ func (p *Parser) registerInfixFn(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
 
+// `)` は優先順位が最低=LOWESTとなる
 func getPrecedence(t token.TokenType) int {
 	if p, ok := precedences[t]; ok {
 		return p
