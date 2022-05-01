@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/ganyariya/go_monkey/token"
 )
@@ -99,4 +100,20 @@ func (ie *IfExpression) String() string {
 		out.WriteString(ie.Alternative.String())
 	}
 	return out.String()
+}
+
+type FunctionExpression struct {
+	Token      token.Token // token.FUNCTION
+	Parameters []*IdentifierExpression
+	Body       *BlockStatement
+}
+
+func (fe *FunctionExpression) expressionNode()      {}
+func (fe *FunctionExpression) TokenLiteral() string { return fe.Token.Literal }
+func (fe *FunctionExpression) String() string {
+	params := []string{}
+	for _, p := range fe.Parameters {
+		params = append(params, p.String())
+	}
+	return fmt.Sprintf("%s(%s)%s", fe.TokenLiteral(), strings.Join(params, ", "), fe.Body.String())
 }

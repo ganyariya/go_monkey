@@ -196,3 +196,57 @@ func TestIfElseExpression(t *testing.T) {
 		return
 	}
 }
+
+func TestFunctionExpressionParsing(t *testing.T) {
+	input := `fn(x, y) {x + y;}`
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := checkIsExpressionStatements(t, program, 1)
+
+	function, ok := stmt.ExpressionValue.(*ast.FunctionExpression)
+	if !ok {
+		t.Fatalf("stmt.ExpressionValue is not FunctionExpression. got=%T", function)
+	}
+	if len(function.Parameters) != 2 {
+		t.Fatalf("Parameter's length is not 2. got=%d", len(function.Parameters))
+	}
+
+	checkIsIdentifierExpression(t, function.Parameters[0], "x")
+	checkIsIdentifierExpression(t, function.Parameters[1], "y")
+
+	if len(function.Body.Statements) != 1 {
+		t.Fatalf("Body.Statements's length is not 1. got=%d", len(function.Body.Statements))
+	}
+	checkIsValidInfixExpression(t, function.Body.Statements[0].(*ast.ExpressionStatement).ExpressionValue, "x", "+", "y")
+}
+
+func TestFunctionExpressionParametersParsing(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedParams []string
+	}{
+		{"fn(){};", []string{}},
+		{"fn(x){};", []string{"x"}},
+		{"fn(x,){};", []string{"x"}},
+		{"fn(x,y,z){};", []string{"x", "y", "z"}},
+	}
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt := checkIsExpressionStatements(t, program, 1)
+		function := stmt.ExpressionValue.(*ast.FunctionExpression)
+
+		if len(function.Parameters) != len(tt.expectedParams) {
+			t.Fatalf("len(parameters) wrong. expected=%d, got=%d", len(tt.expectedParams), len(function.Parameters))
+		}
+		for i, ident := range tt.expectedParams {
+			checkIsValidLiteralExpression(t, function.Parameters[i], ident)
+		}
+	}
+}

@@ -70,6 +70,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefixFn(token.FALSE, p.parseBooleanExpression)
 	p.registerPrefixFn(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefixFn(token.IF, p.parseIfExpression)
+	p.registerPrefixFn(token.FUNCTION, p.parseFunctionExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfixFn(token.PLUS, p.parseInfixExpression)
@@ -166,6 +167,7 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 	return stmt
 }
 
+// curToken が `{` で開始し `}` で終了する
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	block := &ast.BlockStatement{Token: p.curToken} // Token = token.LBRACE
 	block.Statements = []ast.Statement{}
@@ -300,6 +302,37 @@ func (p *Parser) parseIfExpression() ast.Expression {
 		exp.Alternative = p.parseBlockStatement()
 	}
 	return exp
+}
+
+func (p *Parser) parseFunctionExpression() ast.Expression {
+	fe := &ast.FunctionExpression{Token: p.curToken}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	fe.Parameters = p.parseFunctionParameters()
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+	fe.Body = p.parseBlockStatement()
+	// 最後は curToken = } を指した状態で終了する
+	return fe
+}
+
+// `(` で開始し `)` で終了する
+func (p *Parser) parseFunctionParameters() []*ast.IdentifierExpression {
+	identifiers := []*ast.IdentifierExpression{}
+	p.nextToken()
+
+	for p.curTokenIs(token.IDENTIFIER) {
+		identifiers = append(identifiers, p.parseIdentifierExpression().(*ast.IdentifierExpression))
+		if p.peekTokenIs(token.COMMA) {
+			p.nextToken()
+		} else if !p.peekTokenIs(token.RPAREN) {
+			return nil
+		}
+		p.nextToken()
+	}
+	return identifiers
 }
 
 // ----------------------------------------------------------------------------
