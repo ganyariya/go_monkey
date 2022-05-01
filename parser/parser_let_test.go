@@ -4,46 +4,27 @@ import (
 	"testing"
 
 	"github.com/ganyariya/go_monkey/ast"
-	"github.com/ganyariya/go_monkey/lexer"
 )
 
 func TestLetStatements(t *testing.T) {
-	input := `
-let x = 5;
-let y = 10;
-let foobar = 838383;	
-	`
-
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
-	if program == nil {
-		t.Fatal("program.Statements is nil!")
-	}
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
-	}
-
 	tests := []struct {
+		input              string
 		expectedIdentifier string
+		expectedValue      interface{}
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{"let x = 5;", "x", 5},
+		{"let y = true;", "y", true},
+		{"let foobar = y;", "foobar", "y"},
 	}
-
-	for i, tt := range tests {
-		stmt := program.Statements[i]
-		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+	for _, tt := range tests {
+		_, program := initParserProgram(t, tt.input)
+		if !checkIsValidLetStatement(t, program.Statements[0], tt.expectedIdentifier, tt.expectedValue) {
 			return
 		}
 	}
 }
 
-func testLetStatement(t *testing.T, stmt ast.Statement, name string) bool {
+func checkIsValidLetStatement(t *testing.T, stmt ast.Statement, name string, value interface{}) bool {
 	if stmt.TokenLiteral() != "let" {
 		t.Errorf("s.TokenLiteral not 'let', get=%q", stmt.TokenLiteral())
 		return false
@@ -54,18 +35,16 @@ func testLetStatement(t *testing.T, stmt ast.Statement, name string) bool {
 		t.Errorf("stmt is not LetStatement. got=%T", stmt)
 		return false
 	}
-
 	if letStmt.Name.Value != name {
 		t.Errorf("letStmt.Name is not '%s', got=%s", name, letStmt.Name.Value)
 		return false
 	}
-
 	if letStmt.Name.TokenLiteral() != name {
 		t.Errorf("letStmt.Name.TokenLiteral() not '%s'. got=%s", name, letStmt.Name.TokenLiteral())
 		return false
 	}
-
-	// letStmt.Value は後から実装する
-
+	if !checkIsValidLiteralExpression(t, letStmt.Value, value) {
+		return false
+	}
 	return true
 }

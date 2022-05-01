@@ -133,16 +133,15 @@ func (p *Parser) parseLetStatement() ast.Statement {
 	}
 
 	stmt.Name = &ast.IdentifierExpression{Token: p.curToken, Value: p.curToken.Literal}
-
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
 
-	// TODO: セミコロンにたどり着くまで読み飛ばしている（本当はここで x = Expression の「式」をパースする必要がある）
-	for !p.curTokenIs(token.SEMICOLON) {
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
-
 	return stmt
 }
 
@@ -150,11 +149,10 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 	p.nextToken()
 
-	// TODO: 式を呼び飛ばして curToken = SEMICOLON になるまで進める
-	for !p.curTokenIs(token.SEMICOLON) {
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
-
 	return stmt
 }
 
