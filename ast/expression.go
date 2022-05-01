@@ -39,6 +39,15 @@ func (i *IntegerLiteralExpression) expressionNode()      {}
 func (i *IntegerLiteralExpression) TokenLiteral() string { return i.Token.Literal }
 func (i *IntegerLiteralExpression) String() string       { return i.Token.Literal } // for Debug
 
+type BooleanExpression struct {
+	Token token.Token // token.TRUE or FALSE
+	Value bool
+}
+
+func (b *BooleanExpression) expressionNode()      {}
+func (b *BooleanExpression) TokenLiteral() string { return b.Token.Literal }
+func (b *BooleanExpression) String() string       { return b.Token.Literal }
+
 type PrefixExpression struct {
 	Token    token.Token // token.MINUS, BANG
 	Operator string      // 前置演算子

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ganyariya/go_monkey/ast"
@@ -32,20 +33,56 @@ func checkIsExpressionStatements(t *testing.T, program *ast.Program, programLen 
 	return stmt
 }
 
-// ------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------------
-
 func checkIsValidLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
 	switch v := expected.(type) {
 	case int:
 		return checkIsIntegerLiteralExpression(t, exp, int64(v))
 	case int64:
 		return checkIsIntegerLiteralExpression(t, exp, v)
+	case bool:
+		return checkIsBooleanExpression(t, exp, v)
 	case string:
 		return checkIsIdentifierExpression(t, exp, v)
 	}
 	t.Errorf("type of exp not handled. got=%T", expected)
 	return false
+}
+
+func checkIsValidPrefixExpression(t *testing.T, exp ast.Expression, operator string, right interface{}) bool {
+	preExp, ok := exp.(*ast.PrefixExpression)
+	if !ok {
+		t.Errorf("exp is not ast.PrefixExpression. got=%T(%s)", exp, exp)
+		return false
+	}
+
+	if preExp.Operator != operator {
+		t.Errorf("exp.Operator is not '%s'. got=%q", operator, preExp.Operator)
+		return false
+	}
+	if !checkIsValidLiteralExpression(t, preExp.Right, right) {
+		return false
+	}
+	return true
+}
+
+func checkIsValidInfixExpression(t *testing.T, exp ast.Expression, left interface{}, operator string, right interface{}) bool {
+	infixExp, ok := exp.(*ast.InfixExpression)
+	if !ok {
+		t.Errorf("exp is not ast.InfixExpression. got=%T(%s)", exp, exp)
+		return false
+	}
+
+	if !checkIsValidLiteralExpression(t, infixExp.Left, left) {
+		return false
+	}
+	if infixExp.Operator != operator {
+		t.Errorf("exp.Operator is not '%s'. got=%q", operator, infixExp.Operator)
+		return false
+	}
+	if !checkIsValidLiteralExpression(t, infixExp.Right, right) {
+		return false
+	}
+	return true
 }
 
 // ------------------------------------------------------------------------------------------------------
@@ -60,6 +97,24 @@ func checkIsIntegerLiteralExpression(t *testing.T, e ast.Expression, value int64
 	}
 	if ile.Value != value {
 		t.Errorf("ile.Value not %d. got=%d", value, ile.Value)
+		return false
+	}
+	return true
+}
+
+func checkIsBooleanExpression(t *testing.T, e ast.Expression, value bool) bool {
+	be, ok := e.(*ast.BooleanExpression)
+	if !ok {
+		t.Errorf("be not *ast.BooleanExpression. got=%T", e)
+		return false
+	}
+	if be.Value != value {
+		t.Errorf("be.Value not %v. got=%v", value, be.Value)
+		return false
+	}
+	if be.TokenLiteral() != fmt.Sprintf("%t", value) {
+		t.Errorf("be.TokenLiteral not %t. got=%s", value, be.TokenLiteral())
+		return false
 	}
 	return true
 }

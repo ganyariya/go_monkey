@@ -66,6 +66,8 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefixFn(token.INT, p.parseIntegerLiteralExpression)
 	p.registerPrefixFn(token.BANG, p.parsePrefixExpression)
 	p.registerPrefixFn(token.MINUS, p.parsePrefixExpression)
+	p.registerPrefixFn(token.TRUE, p.parseBooleanExpression)
+	p.registerPrefixFn(token.FALSE, p.parseBooleanExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfixFn(token.PLUS, p.parseInfixExpression)
@@ -223,6 +225,11 @@ func (p *Parser) parseIntegerLiteralExpression() ast.Expression {
 	}
 	ile.Value = value
 	return ile
+}
+
+// token.TRUE か FALSE がトークンとして与えられるので「token.TRUE」かを判定することで true/false 式にする
+func (p *Parser) parseBooleanExpression() ast.Expression {
+	return &ast.BooleanExpression{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
