@@ -69,6 +69,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefixFn(token.TRUE, p.parseBooleanExpression)
 	p.registerPrefixFn(token.FALSE, p.parseBooleanExpression)
 	p.registerPrefixFn(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefixFn(token.IF, p.parseIfExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfixFn(token.PLUS, p.parseInfixExpression)
@@ -165,6 +166,21 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 	return stmt
 }
 
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.curToken} // Token = token.LBRACE
+	block.Statements = []ast.Statement{}
+	p.nextToken()
+
+	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+		p.nextToken()
+	}
+	return block
+}
+
 /*
 Note: p82
 parseExpression の precedence の値は右結合力を表す。
@@ -248,13 +264,40 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 }
 
 /*
-`(` で呼び出される。
+`(` で呼び出される。 expectPeek で `)` を飛ばす。
 */
 func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.nextToken()
 	exp := p.parseExpression(LOWEST)
 	if !p.expectPeek(token.RPAREN) {
 		return nil
+	}
+	return exp
+}
+
+// TODO: elif を追加する
+func (p *Parser) parseIfExpression() ast.Expression {
+	exp := &ast.IfExpression{Token: p.curToken}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+	exp.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+	exp.Consequence = p.parseBlockStatement()
+
+	if p.peekTokenIs(token.ELSE) {
+		p.nextToken()
+		if !p.expectPeek(token.LBRACE) {
+			return nil
+		}
+		exp.Alternative = p.parseBlockStatement()
 	}
 	return exp
 }
@@ -266,8 +309,9 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 次のトークン（p.peekToken）が token.TokenType と一致しているか調べる
 一致しているならそれを読み出したいので curToken <- peekToken へ更新する
 
-アサーション関数と呼ばれ多くの構文解析器に存在する
+アサーション関数と呼ばれ多くの構文解析器に存在する（IfExpression のパースなどで上手に利用できる）
 次に来るトークンとして「期待する型」をチェックし正しい場合のみトークンを次に進める
+失敗したら false を返しエラーとする
 */
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {

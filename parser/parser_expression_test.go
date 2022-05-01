@@ -3,6 +3,7 @@ package parser
 import (
 	"testing"
 
+	"github.com/ganyariya/go_monkey/ast"
 	"github.com/ganyariya/go_monkey/lexer"
 )
 
@@ -111,5 +112,87 @@ func TestParsingInfixExpressions(t *testing.T) {
 		if !checkIsValidInfixExpression(t, stmt.ExpressionValue, tt.leftValue, tt.operator, tt.rightValue) {
 			return
 		}
+	}
+}
+
+func TestIfExpression(t *testing.T) {
+	input := `if (x < y) { x }`
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := checkIsExpressionStatements(t, program, 1)
+
+	exp, ok := stmt.ExpressionValue.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("stmt.ExpressionValue is not ast.IfExpression. got=%T", stmt.ExpressionValue)
+	}
+
+	if !checkIsValidInfixExpression(t, exp.Condition, "x", "<", "y") {
+		return
+	}
+
+	if len(exp.Consequence.Statements) != 1 {
+		t.Errorf("Consequence length is not 1. got=%d", len(exp.Consequence.Statements))
+	}
+
+	// ここでは ExpressionStatement とテストケースで仮定しているが本来は任意の Statement
+	conExp, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Consequence.Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
+	}
+	if !checkIsIdentifierExpression(t, conExp.ExpressionValue, "x") {
+		return
+	}
+
+	if exp.Alternative != nil {
+		t.Fatalf("exp.Alternative will be nil, got=%v", exp.Alternative)
+	}
+}
+
+func TestIfElseExpression(t *testing.T) {
+	input := `if (x < y) { x } else { y }`
+
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := checkIsExpressionStatements(t, program, 1)
+
+	exp, ok := stmt.ExpressionValue.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.IfExpression. got=%T", stmt.ExpressionValue)
+	}
+
+	if !checkIsValidInfixExpression(t, exp.Condition, "x", "<", "y") {
+		return
+	}
+
+	if len(exp.Consequence.Statements) != 1 {
+		t.Errorf("consequence is not 1 statements. got=%d\n",
+			len(exp.Consequence.Statements))
+	}
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
+			exp.Consequence.Statements[0])
+	}
+	if !checkIsIdentifierExpression(t, consequence.ExpressionValue, "x") {
+		return
+	}
+
+	if len(exp.Alternative.Statements) != 1 {
+		t.Errorf("exp.Alternative.Statements does not contain 1 statements. got=%d\n",
+			len(exp.Alternative.Statements))
+	}
+	alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
+			exp.Alternative.Statements[0])
+	}
+	if !checkIsIdentifierExpression(t, alternative.ExpressionValue, "y") {
+		return
 	}
 }
