@@ -94,12 +94,40 @@ func TestIfElseExpression(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		expected := callEval(tt.input)
+		evaluated := callEval(tt.input)
 		integer, ok := tt.expected.(int) // int64 にキャストできない（tests で int64(x) にしてないため）
 		if ok {
-			checkIntegerObject(t, expected, int64(integer), tt.input)
+			checkIntegerObject(t, evaluated, int64(integer), tt.input)
 		} else {
-			checkNullObject(t, expected, tt.input)
+			checkNullObject(t, evaluated, tt.input)
 		}
+	}
+}
+
+func TestReturnStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"return 10;", 10},
+		{"return 10; 9", 10},
+		{"4; return 2*5; 9", 10},
+		{"return 1; return 2;", 1},
+		{
+			/*
+				if(10 > 1){statements} で 2 (`if(2>1)`でReturnValue(2)から取り出した2) を受け取るが
+				その後の return 10 が ReturnValue(10) として 10 が返されてしまう (p147)
+			*/
+			`if (10 > 1) {
+				if (2 > 1) {
+					return 2;
+				}
+				return 10;
+			}`, 2,
+		},
+	}
+	for _, tt := range tests {
+		evaluated := callEval(tt.input)
+		checkIntegerObject(t, evaluated, tt.expected, tt.input)
 	}
 }

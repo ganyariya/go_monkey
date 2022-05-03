@@ -5,12 +5,32 @@ import (
 	"github.com/ganyariya/go_monkey/object"
 )
 
-func evalStatements(stmts []ast.Statement) object.Object {
+func evalProgram(program *ast.Program) object.Object {
+	var ret object.Object
+	for _, stmt := range program.Statements {
+		ret = Eval(stmt)
+		if returnValue, ok := ret.(*object.ReturnValue); ok {
+			return returnValue.Value
+		}
+	}
+	return ret
+}
+
+func evalBlockStatements(stmts []ast.Statement) object.Object {
 	var ret object.Object
 	for _, stmt := range stmts {
 		ret = Eval(stmt)
+		// BlockStatement では ReturnValue.Value にアンラップしない（ブロック文ネストでバグる)
+		if ret != nil && ret.Type() == object.RETURN_VALUE_OBJ {
+			return ret
+		}
 	}
 	return ret
+}
+
+func evalReturnStatement(stmt *ast.ReturnStatement) object.Object {
+	obj := Eval(stmt.ReturnValue)
+	return &object.ReturnValue{Value: obj}
 }
 
 // -----------------------------------------------------------

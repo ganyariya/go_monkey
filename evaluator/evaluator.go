@@ -11,9 +11,11 @@ AST Node を再帰的に評価して Object System の Object に変換する
 func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalProgram(node)
 	case *ast.BlockStatement:
-		return evalStatements(node.Statements)
+		return evalBlockStatements(node.Statements)
+	case *ast.ReturnStatement:
+		return evalReturnStatement(node)
 	case *ast.ExpressionStatement:
 		return Eval(node.ExpressionValue)
 	case *ast.IntegerLiteralExpression:
