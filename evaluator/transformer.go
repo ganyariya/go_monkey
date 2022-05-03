@@ -16,12 +16,6 @@ func evalStatements(stmts []ast.Statement) object.Object {
 // -----------------------------------------------------------
 // -----------------------------------------------------------
 
-// true / false 再利用
-var (
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
-)
-
 func evalBooleanExpression(exp *ast.BooleanExpression) object.Object {
 	if exp.Value {
 		return TRUE
