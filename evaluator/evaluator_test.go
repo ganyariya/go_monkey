@@ -14,6 +14,17 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"-5", -5},
 		{"-10", -10},
 		{"--10", 10},
+		{"5 + 5", 10},
+		{"5 + 5 + 5 + 5 - 10", 10},
+		{"2 * 2 * 2 * 2", 16},
+		{"-10 + 20 - 10", 0},
+		{"5 + 2 * -10", -15},
+		{"5 * 2 - 10", 0},
+		{"50 / 2 * 2 + 10", 60},
+		{"2 * (3 + 5)", 16},
+		{"3 * 3 * 3 + 10", 37},
+		{"3 * (3 * 3) + 10", 37},
+		{"3 * (3 * 3 + 10)", 57},
 	}
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)
@@ -45,6 +56,21 @@ func TestBangOperator(t *testing.T) {
 		{"!!false", false},
 		{"!!5", true},
 		{"!!0", false},
+		{"1 == 1", true},
+		{"1 != 1", false},
+		{"1 == 2", false},
+		{"1 != 2", true},
+		{"1 < 2", true},
+		{"1 > 2", false},
+		{"true == true", true},
+		{"true != true", false},
+		{"false == false", true},
+		{"false != false", false},
+		{"(1 < 2) == true", true},
+		{"(1 > 2) == true", false},
+		{"3 == true", false},
+		{"0 == true", false},
+		{"4 != true", true},
 	}
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)

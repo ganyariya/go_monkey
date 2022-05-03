@@ -267,6 +267,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 /*
 `(` で呼び出される。 expectPeek で `)` を飛ばす。
+つまり、`(` は構文解析時に除去され 専用の Expression はない。
 */
 func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.nextToken()
