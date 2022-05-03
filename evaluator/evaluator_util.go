@@ -13,3 +13,9 @@ func checkIntegerObject(t *testing.T, obj object.Object, expected int64) {
 	require.True(t, ok, fmt.Sprintf("object is not Integer. got=%T (%+v)", obj, obj))
 	require.Equal(t, expected, result.Value)
 }
+
+func checkBooleanObject(t *testing.T, obj object.Object, expected bool) {
+	result, ok := obj.(*object.Boolean)
+	require.True(t, ok, fmt.Sprintf("object is not Boolean. got=%T (%+v)", obj, obj))
+	require.Equal(t, expected, result.Value)
+}

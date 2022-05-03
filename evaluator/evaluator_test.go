@@ -19,6 +19,18 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 }
 
+func TestEvalBooleanExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{{"true", true}, {"false", false}}
+	for _, tt := range tests {
+		evaluated := callEval(tt.input)
+		checkBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
+// Source Code -> 字句解析 -> 構文解析 -> 評価 -> Object
 func callEval(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)

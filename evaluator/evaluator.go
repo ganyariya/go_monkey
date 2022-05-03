@@ -15,15 +15,9 @@ func Eval(node ast.Node) object.Object {
 	case *ast.ExpressionStatement:
 		return Eval(node.ExpressionValue)
 	case *ast.IntegerLiteralExpression:
-		return &object.Integer{Value: node.Value}
+		return evalIntegerLiteralExpression(node)
+	case *ast.BooleanExpression:
+		return evalBooleanExpression(node)
 	}
 	return nil
-}
-
-func evalStatements(stmts []ast.Statement) object.Object {
-	var ret object.Object
-	for _, stmt := range stmts {
-		ret = Eval(stmt)
-	}
-	return ret
 }
