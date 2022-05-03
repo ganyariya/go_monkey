@@ -1,13 +1,12 @@
 package evaluator
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/ganyariya/go_monkey/lexer"
 	"github.com/ganyariya/go_monkey/object"
 	"github.com/ganyariya/go_monkey/parser"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 // Source Code -> 字句解析 -> 構文解析 -> 評価 -> Object
@@ -18,14 +17,18 @@ func callEval(input string) object.Object {
 	return Eval(program)
 }
 
-func checkIntegerObject(t *testing.T, obj object.Object, expected int64) {
+func checkIntegerObject(t *testing.T, obj object.Object, expected int64, text string) {
 	result, ok := obj.(*object.Integer)
-	require.True(t, ok, fmt.Sprintf("object is not Integer. got=%T (%+v)", obj, obj))
-	require.Equal(t, expected, result.Value)
+	assert.True(t, ok, text)
+	assert.Equal(t, expected, result.Value)
 }
 
-func checkBooleanObject(t *testing.T, obj object.Object, expected bool) {
+func checkBooleanObject(t *testing.T, obj object.Object, expected bool, text string) {
 	result, ok := obj.(*object.Boolean)
-	require.True(t, ok, fmt.Sprintf("object is not Boolean. got=%T (%+v)", obj, obj))
-	require.Equal(t, expected, result.Value)
+	assert.True(t, ok, text)
+	assert.Equal(t, expected, result.Value)
+}
+
+func checkNullObject(t *testing.T, obj object.Object, text string) {
+	assert.Equal(t, NULL, obj, text)
 }

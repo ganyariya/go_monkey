@@ -60,24 +60,22 @@ func evalInfixExpression(exp *ast.InfixExpression) object.Object {
 	}
 }
 
+func evalIfExpression(exp *ast.IfExpression) object.Object {
+	condition := Eval(exp.Condition)
+	if condition.AsBool() {
+		return Eval(exp.Consequence)
+	} else if exp.Alternative != nil {
+		return Eval(exp.Alternative)
+	} else {
+		return NULL
+	}
+}
+
 // ------------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------
 
 func evalBangPrefixOperator(right object.Object) object.Object {
-	switch right {
-	case TRUE:
-		return FALSE
-	case FALSE:
-		return TRUE
-	case NULL:
-		return TRUE
-	default:
-		if right.AsBool() {
-			return FALSE
-		} else {
-			return TRUE
-		}
-	}
+	return nativeBoolToBooleanObject(!right.AsBool())
 }
 
 func evalMinusPrefixOperator(right object.Object) object.Object {

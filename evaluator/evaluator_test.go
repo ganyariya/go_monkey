@@ -28,7 +28,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)
-		checkIntegerObject(t, evaluated, tt.expected)
+		checkIntegerObject(t, evaluated, tt.expected, tt.input)
 	}
 }
 
@@ -39,7 +39,7 @@ func TestEvalBooleanExpression(t *testing.T) {
 	}{{"true", true}, {"false", false}}
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)
-		checkBooleanObject(t, evaluated, tt.expected)
+		checkBooleanObject(t, evaluated, tt.expected, tt.input)
 	}
 }
 
@@ -74,6 +74,32 @@ func TestBangOperator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)
-		checkBooleanObject(t, evaluated, tt.expected)
+		checkBooleanObject(t, evaluated, tt.expected, tt.input)
+	}
+}
+
+func TestIfElseExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"if (true) { 10 }", 10},
+		{"if (false) { 10 }", nil},
+		{"if (1) { 10 }", 10},
+		{"if (0) { 10 }", nil},
+		{"if (1 < 2) { 10 }", 10},
+		{"if (1 > 2) { 10 }", nil},
+		{"if (1 < 2) { 10 } else { 20 }", 10},
+		{"if (1 > 2) { 10 } else { 20 }", 20},
+	}
+
+	for _, tt := range tests {
+		expected := callEval(tt.input)
+		integer, ok := tt.expected.(int) // int64 にキャストできない（tests で int64(x) にしてないため）
+		if ok {
+			checkIntegerObject(t, expected, int64(integer), tt.input)
+		} else {
+			checkNullObject(t, expected, tt.input)
+		}
 	}
 }
