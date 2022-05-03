@@ -18,6 +18,8 @@ func Eval(node ast.Node) object.Object {
 		return evalIntegerLiteralExpression(node)
 	case *ast.BooleanExpression:
 		return evalBooleanExpression(node)
+	case *ast.PrefixExpression:
+		return evalPrefixExpression(node)
 	}
 	return nil
 }

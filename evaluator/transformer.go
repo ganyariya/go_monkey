@@ -27,3 +27,45 @@ func evalBooleanExpression(exp *ast.BooleanExpression) object.Object {
 func evalIntegerLiteralExpression(exp *ast.IntegerLiteralExpression) object.Object {
 	return &object.Integer{Value: exp.Value}
 }
+
+func evalPrefixExpression(exp *ast.PrefixExpression) object.Object {
+	rightObj := Eval(exp.Right)
+	switch exp.Operator {
+	case "!":
+		return evalBangPrefixOperator(rightObj)
+	case "-":
+		return evalMinusPrefixOperator(rightObj)
+	default:
+		return NULL
+	}
+}
+
+func evalBangPrefixOperator(right object.Object) object.Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		switch right := right.(type) {
+		case *object.Integer:
+			if right.Value == 0 {
+				return TRUE
+			} else {
+				return FALSE
+			}
+		default:
+			return FALSE
+		}
+	}
+}
+
+func evalMinusPrefixOperator(right object.Object) object.Object {
+	if right.Type() != object.INTEGER_OBJ {
+		return NULL
+	}
+	value := right.(*object.Integer).Value
+	return &object.Integer{Value: -value}
+}
