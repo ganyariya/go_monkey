@@ -72,15 +72,10 @@ func evalBangPrefixOperator(right object.Object) object.Object {
 	case NULL:
 		return TRUE
 	default:
-		switch right := right.(type) {
-		case *object.Integer:
-			if right.Value == 0 {
-				return TRUE
-			} else {
-				return FALSE
-			}
-		default:
+		if right.AsBool() {
 			return FALSE
+		} else {
+			return TRUE
 		}
 	}
 }

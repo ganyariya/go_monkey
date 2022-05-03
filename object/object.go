@@ -15,4 +15,5 @@ type ObjectType string
 type Object interface {
 	Type() ObjectType // オブジェクトのタイプを表す
 	Inspect() string  // オブジェクトがラップしている値を表す
+	AsBool() bool     // オブジェクトの真偽値
 }
