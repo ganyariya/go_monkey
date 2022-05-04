@@ -1,6 +1,8 @@
 package evaluator
 
-import "github.com/ganyariya/go_monkey/object"
+import (
+	"github.com/ganyariya/go_monkey/object"
+)
 
 var (
 	TRUE  = &object.Boolean{Value: true}
