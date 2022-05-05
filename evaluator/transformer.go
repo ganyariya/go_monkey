@@ -132,6 +132,33 @@ func evalIfExpression(exp *ast.IfExpression, env *object.Environment) object.Obj
 	}
 }
 
+/*
+Function が「定義された」時点における Env を保持する（関数を実行するときに新しい EnclosedEnv をつくる）
+*/
+func evalFunctionExpression(exp *ast.FunctionExpression, env *object.Environment) object.Object {
+	return &object.Function{Parameters: exp.Parameters, Body: exp.Body, Env: env}
+}
+
+/*
+引数にある env = 定義時点での Env
+*/
+func evalCallExpression(exp *ast.CallExpression, env *object.Environment) object.Object {
+	/*
+		Identifier -> 識別子に対応する関数を取り出す
+		Function -> 関数を直接得る
+		Function は`定義時点`における env を保持する
+	*/
+	fnObj := Eval(exp.Function, env)
+	if isError(fnObj) {
+		return fnObj
+	}
+	args := evalCallExpressionArguments(exp.Arguments, env)
+	if len(args) == 1 && isError(args[0]) {
+		return args[0]
+	}
+	return applyCallFunction(fnObj, args)
+}
+
 // ------------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------
 
@@ -170,4 +197,64 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
+}
+
+// ------------------------------------------------------------------------------------------------------------
+// Call Function
+// ------------------------------------------------------------------------------------------------------------
+
+/*
+add(2, 4 + 10) のような関数呼び出しにおける「引数」を評価して object の配列に変換する
+*/
+func evalCallExpressionArguments(argExps []ast.Expression, env *object.Environment) []object.Object {
+	var ret []object.Object
+	for _, exp := range argExps {
+		evaluated := Eval(exp, env)
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+		ret = append(ret, evaluated)
+	}
+	return ret
+}
+
+/*
+評価済みの arg objects を function object に与えて関数式を評価する。
+*/
+func applyCallFunction(fn object.Object, args []object.Object) object.Object {
+	fnObj, ok := fn.(*object.Function)
+	if !ok {
+		return newError("not a function: %s", fn.Type())
+	}
+	registeredEnv := registerEnclosedCallEnv(fnObj, args)
+	evaluated := Eval(fnObj.Body, registeredEnv)
+	/*
+		Unwrap しないと add(1, sub(1, 20)) で add(1, Return(-19)) で計算エラーが起きたり
+		return 効果が関数をまたいで浮上して実行が途中で停止してしまう
+	*/
+	return unwrapReturnValue(evaluated)
+}
+
+/*
+仮引数（変数）と実引数（実値）を紐付けた 新たな記憶容量 Environment を返す
+**Function Object が持つ親環境に 新しい環境はラップされる**
+*/
+func registerEnclosedCallEnv(fnObj *object.Function, args []object.Object) *object.Environment {
+	enclosedEnv := object.NewEnclosedEnvironment(fnObj.Env)
+	// Parameters = 仮引数[x, y, z]  args = 評価済実引数[10, 1, 4]
+	for i := 0; i < len(fnObj.Parameters); i++ {
+		// 変数に値を登録する (x = 10)
+		enclosedEnv.Set(fnObj.Parameters[i].Value, args[i])
+	}
+	return enclosedEnv
+}
+
+// ------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------
+
+func unwrapReturnValue(obj object.Object) object.Object {
+	if returnValue, ok := obj.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+	return obj
 }

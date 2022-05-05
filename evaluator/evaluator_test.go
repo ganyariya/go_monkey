@@ -181,3 +181,62 @@ func TestLetStatements(t *testing.T) {
 	}
 
 }
+
+func TestFunctionObject(t *testing.T) {
+	input := "fn(x) {x + 2;}"
+	evaluated := callEval(input)
+
+	fn, ok := evaluated.(*object.Function)
+	if !ok {
+		t.Fatalf("object is not Function. got=%T(%v)", evaluated, evaluated)
+	}
+	if fn.Parameters[0].String() != "x" {
+		t.Fatalf("parameter is not x. got=%s", fn.Parameters[0].String())
+	}
+	if fn.Body.String() != "(x + 2)" {
+		t.Fatalf("Body is wrong. got=%s", fn.Body.String())
+	}
+}
+
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let identity = fn(x) {x;} identity(5);", 5},
+		{"let identity = fn(x) {return x;} identity(5);", 5},
+		{"let double = fn(x) {2 * x;} double(5);", 10},
+		{"let add = fn(x, y) {x + y;} add(5 + 4, add(2, 3));", 14},
+		{"fn(x){x;}(5)", 5},
+		{"fn(x, y){if (x > y) {return x;} else {return y;}}(1, 2)", 2},
+		{"let x = 10; let add = fn(y) {x + y;}; add(2)", 12},
+		{"let x = 10; let identity = fn(x) {x;} identity(5);", 5},
+		{"let x = 10; let identity = fn(x) {x;} identity(5); x;", 10},
+		{
+			`
+			let adder = fn(x) { return fn(y) {return x + y;}; }	
+			let addTwo = adder(2); addTwo(4);
+			`, 6,
+		}, // Closure
+		{
+			`
+			let z = 10;
+			let adder = fn(x) { return fn(y) {return x + y;}; }	
+			let addTen = adder(z); let z = 20; addTen(4);
+			`, 14,
+		}, // Closure adder(z) の時点で z = 10 の新しい環境を作り fn(y) の Env として登録する
+		{
+			`
+				let add = fn(x, y) {x + y;};
+				let apply = fn(x, y, func) {func(x, y);};
+				apply(1, 2, add);
+			`, 3,
+		},
+		{"let fact = fn(x) {if (x == 1) {return 1;} else {x * fact(x - 1);} }; fact(5);", 120},
+	}
+
+	for _, tt := range tests {
+		evaluated := callEval(tt.input)
+		checkIntegerObject(t, evaluated, tt.expected, tt.input)
+	}
+}

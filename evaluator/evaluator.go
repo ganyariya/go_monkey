@@ -32,6 +32,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalInfixExpression(node, env)
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
+	case *ast.FunctionExpression:
+		return evalFunctionExpression(node, env)
+	case *ast.CallExpression:
+		return evalCallExpression(node, env)
 	}
 	return nil
 }
