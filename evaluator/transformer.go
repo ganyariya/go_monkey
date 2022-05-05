@@ -1,14 +1,16 @@
 package evaluator
 
 import (
+	"fmt"
+
 	"github.com/ganyariya/go_monkey/ast"
 	"github.com/ganyariya/go_monkey/object"
 )
 
-func evalProgram(program *ast.Program) object.Object {
+func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	var ret object.Object
 	for _, stmt := range program.Statements {
-		ret = Eval(stmt)
+		ret = Eval(stmt, env)
 		switch ret := ret.(type) {
 		case *object.ReturnValue:
 			return ret.Value
@@ -19,10 +21,10 @@ func evalProgram(program *ast.Program) object.Object {
 	return ret
 }
 
-func evalBlockStatements(stmts []ast.Statement) object.Object {
+func evalBlockStatements(stmts []ast.Statement, env *object.Environment) object.Object {
 	var ret object.Object
 	for _, stmt := range stmts {
-		ret = Eval(stmt)
+		ret = Eval(stmt, env)
 		// BlockStatement では ReturnValue.Value にアンラップしない（ブロック文ネストでバグる)
 		if ret != nil {
 			if ret.Type() == object.RETURN_VALUE_OBJ || ret.Type() == object.ERROR_OBJ {
@@ -33,12 +35,21 @@ func evalBlockStatements(stmts []ast.Statement) object.Object {
 	return ret
 }
 
-func evalReturnStatement(stmt *ast.ReturnStatement) object.Object {
-	obj := Eval(stmt.ReturnValue)
+func evalReturnStatement(stmt *ast.ReturnStatement, env *object.Environment) object.Object {
+	obj := Eval(stmt.ReturnValue, env)
 	if isError(obj) {
 		return obj
 	}
 	return &object.ReturnValue{Value: obj}
+}
+
+func evalLetStatement(stmt *ast.LetStatement, env *object.Environment) object.Object {
+	expObj := Eval(stmt.Value, env)
+	if isError(expObj) {
+		return expObj
+	}
+	env.Set(stmt.Name.Value, expObj)
+	return expObj
 }
 
 // -----------------------------------------------------------
@@ -59,8 +70,16 @@ func evalIntegerLiteralExpression(exp *ast.IntegerLiteralExpression) object.Obje
 	return &object.Integer{Value: exp.Value}
 }
 
-func evalPrefixExpression(exp *ast.PrefixExpression) object.Object {
-	rightObj := Eval(exp.Right)
+func evalIdentifierExpression(exp *ast.IdentifierExpression, env *object.Environment) object.Object {
+	obj, ok := env.Get(exp.Value)
+	if !ok {
+		return newError(fmt.Sprintf("identifier not found: %s", exp.Value))
+	}
+	return obj
+}
+
+func evalPrefixExpression(exp *ast.PrefixExpression, env *object.Environment) object.Object {
+	rightObj := Eval(exp.Right, env)
 	if isError(rightObj) {
 		return rightObj
 	}
@@ -74,12 +93,12 @@ func evalPrefixExpression(exp *ast.PrefixExpression) object.Object {
 	}
 }
 
-func evalInfixExpression(exp *ast.InfixExpression) object.Object {
-	leftObj := Eval(exp.Left)
+func evalInfixExpression(exp *ast.InfixExpression, env *object.Environment) object.Object {
+	leftObj := Eval(exp.Left, env)
 	if isError(leftObj) {
 		return leftObj
 	}
-	rightObj := Eval(exp.Right)
+	rightObj := Eval(exp.Right, env)
 	if isError(rightObj) {
 		return rightObj
 	}
@@ -99,15 +118,15 @@ func evalInfixExpression(exp *ast.InfixExpression) object.Object {
 	}
 }
 
-func evalIfExpression(exp *ast.IfExpression) object.Object {
-	condition := Eval(exp.Condition)
+func evalIfExpression(exp *ast.IfExpression, env *object.Environment) object.Object {
+	condition := Eval(exp.Condition, env)
 	if isError(condition) {
 		return condition
 	}
 	if condition.AsBool() {
-		return Eval(exp.Consequence)
+		return Eval(exp.Consequence, env)
 	} else if exp.Alternative != nil {
-		return Eval(exp.Alternative)
+		return Eval(exp.Alternative, env)
 	} else {
 		return NULL
 	}

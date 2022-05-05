@@ -14,7 +14,8 @@ func callEval(input string) object.Object {
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
 	program := p.ParseProgram()
-	return Eval(program)
+	env := object.NewEnvironment()
+	return Eval(program, env)
 }
 
 func checkIntegerObject(t *testing.T, obj object.Object, expected int64, text string) {

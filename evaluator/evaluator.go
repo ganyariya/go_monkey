@@ -8,26 +8,30 @@ import (
 /*
 AST Node を再帰的に評価して Object System の Object に変換する
 */
-func Eval(node ast.Node) object.Object {
+func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalProgram(node)
+		return evalProgram(node, env)
 	case *ast.BlockStatement:
-		return evalBlockStatements(node.Statements)
+		return evalBlockStatements(node.Statements, env)
 	case *ast.ReturnStatement:
-		return evalReturnStatement(node)
+		return evalReturnStatement(node, env)
+	case *ast.LetStatement:
+		return evalLetStatement(node, env)
 	case *ast.ExpressionStatement:
-		return Eval(node.ExpressionValue)
+		return Eval(node.ExpressionValue, env)
 	case *ast.IntegerLiteralExpression:
 		return evalIntegerLiteralExpression(node)
 	case *ast.BooleanExpression:
 		return evalBooleanExpression(node)
+	case *ast.IdentifierExpression:
+		return evalIdentifierExpression(node, env)
 	case *ast.PrefixExpression:
-		return evalPrefixExpression(node)
+		return evalPrefixExpression(node, env)
 	case *ast.InfixExpression:
-		return evalInfixExpression(node)
+		return evalInfixExpression(node, env)
 	case *ast.IfExpression:
-		return evalIfExpression(node)
+		return evalIfExpression(node, env)
 	}
 	return nil
 }
