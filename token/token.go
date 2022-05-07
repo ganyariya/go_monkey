@@ -15,6 +15,7 @@ const (
 	// 識別子 & リテラル
 	IDENTIFIER = "IDENTIFIER"
 	INT        = "INT"
+	STRING     = "STRING"
 
 	// 演算子
 	ASSIGN   = "ASSIGN"
