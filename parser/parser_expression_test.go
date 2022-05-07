@@ -39,6 +39,28 @@ func TestBooleanExpression(t *testing.T) {
 	}
 }
 
+func TestStringLiteralExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"\"Hello, World\";", "Hello, World"},
+		{"\"Love...\";", "Love..."},
+	}
+
+	for _, tt := range tests {
+		_, program := initParserProgram(t, tt.input)
+		stmt := checkIsExpressionStatements(t, program, 1)
+		literal, ok := stmt.ExpressionValue.(*ast.StringLiteralExpression)
+		if !ok {
+			t.Fatalf("exp not *ast.StringLiteralExpression. got=%T", stmt.ExpressionValue)
+		}
+		if literal.Value != tt.expected {
+			t.Fatalf("expected=%s, got=%s", tt.expected, literal.Value)
+		}
+	}
+}
+
 func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct {
 		input    string

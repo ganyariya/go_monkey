@@ -50,6 +50,15 @@ func (b *BooleanExpression) expressionNode()      {}
 func (b *BooleanExpression) TokenLiteral() string { return b.Token.Literal }
 func (b *BooleanExpression) String() string       { return b.Token.Literal }
 
+type StringLiteralExpression struct {
+	Token token.Token // token.STRING
+	Value string
+}
+
+func (s *StringLiteralExpression) expressionNode()      {}
+func (s *StringLiteralExpression) TokenLiteral() string { return s.Token.Literal }
+func (s *StringLiteralExpression) String() string       { return s.Token.Literal }
+
 type PrefixExpression struct {
 	Token    token.Token // token.MINUS, BANG
 	Operator string      // 前置演算子

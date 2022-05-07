@@ -72,6 +72,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefixFn(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefixFn(token.IF, p.parseIfExpression)
 	p.registerPrefixFn(token.FUNCTION, p.parseFunctionExpression)
+	p.registerPrefixFn(token.STRING, p.parseStringLiteralExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfixFn(token.PLUS, p.parseInfixExpression)
@@ -249,6 +250,10 @@ func (p *Parser) parseIntegerLiteralExpression() ast.Expression {
 // token.TRUE か FALSE がトークンとして与えられるので「token.TRUE」かを判定することで true/false 式にする
 func (p *Parser) parseBooleanExpression() ast.Expression {
 	return &ast.BooleanExpression{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
+}
+
+func (p *Parser) parseStringLiteralExpression() ast.Expression {
+	return &ast.StringLiteralExpression{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
