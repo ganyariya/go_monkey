@@ -33,3 +33,9 @@ func checkBooleanObject(t *testing.T, obj object.Object, expected bool, text str
 func checkNullObject(t *testing.T, obj object.Object, text string) {
 	assert.Equal(t, NULL, obj, text)
 }
+
+func checkStringObject(t *testing.T, obj object.Object, expected string, text string) {
+	result, ok := obj.(*object.String)
+	assert.True(t, ok, text)
+	assert.Equal(t, expected, result.Value)
+}

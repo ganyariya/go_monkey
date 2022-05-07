@@ -73,6 +73,11 @@ func TestBangOperator(t *testing.T) {
 		{"3 == true", false},
 		{"0 == true", false},
 		{"4 != true", true},
+		{`"Hello" == "Hello"`, true},
+		{`"Hello" == "World"`, false},
+		{`"Hello" != "World"`, true},
+		{`!"World"`, false},
+		{`!""`, true},
 	}
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)
@@ -148,6 +153,7 @@ func TestErrorHandling(t *testing.T) {
 		{"if (10 > 1) { if (2 > 1) { return true + false; } return true; }", "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar;", "identifier not found: foobar"},
 		{"let x = 10 + foobar;", "identifier not found: foobar"},
+		{`"Hello" - "World"`, "unknown operator: STRING - STRING"},
 	}
 
 	for _, tt := range tests {
@@ -238,5 +244,19 @@ func TestFunctionApplication(t *testing.T) {
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)
 		checkIntegerObject(t, evaluated, tt.expected, tt.input)
+	}
+}
+
+func TestStringLiteralExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"\"Hello, World!\";", "Hello, World!"},
+		{"\"Sei\" + \"Kin\";", "SeiKin"},
+	}
+	for _, tt := range tests {
+		evaluated := callEval(tt.input)
+		checkStringObject(t, evaluated, tt.expected, tt.input)
 	}
 }

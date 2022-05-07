@@ -70,6 +70,10 @@ func evalIntegerLiteralExpression(exp *ast.IntegerLiteralExpression) object.Obje
 	return &object.Integer{Value: exp.Value}
 }
 
+func evalStringLiteralExpression(exp *ast.StringLiteralExpression) object.Object {
+	return &object.String{Value: exp.Value}
+}
+
 func evalIdentifierExpression(exp *ast.IdentifierExpression, env *object.Environment) object.Object {
 	obj, ok := env.Get(exp.Value)
 	if !ok {
@@ -106,6 +110,8 @@ func evalInfixExpression(exp *ast.InfixExpression, env *object.Environment) obje
 	// 整数は「値」で処理する
 	case leftObj.Type() == object.INTEGER_OBJ && rightObj.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(exp.Operator, leftObj, rightObj)
+	case leftObj.Type() == object.STRING_OBJ && rightObj.Type() == object.STRING_OBJ:
+		return evalStringInfixExpression(exp.Operator, leftObj, rightObj)
 	// reference (pointer) （異なる型 -> false）
 	case exp.Operator == "==":
 		return nativeBoolToBooleanObject(leftObj == rightObj)
@@ -194,6 +200,21 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 		return nativeBoolToBooleanObject(leftValue < rightValue)
 	case ">":
 		return nativeBoolToBooleanObject(leftValue > rightValue)
+	default:
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
+
+func evalStringInfixExpression(operator string, left, right object.Object) object.Object {
+	leftValue := left.(*object.String).Value
+	rightValue := right.(*object.String).Value
+	switch operator {
+	case "+":
+		return &object.String{Value: leftValue + rightValue}
+	case "==":
+		return nativeBoolToBooleanObject(leftValue == rightValue)
+	case "!=":
+		return nativeBoolToBooleanObject(leftValue != rightValue)
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
