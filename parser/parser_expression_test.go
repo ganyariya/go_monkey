@@ -275,4 +275,12 @@ func TestArrayLiteralExpression(t *testing.T) {
 	checkIsIntegerLiteralExpression(t, exp.Elements[0], 1)
 	checkIsValidInfixExpression(t, exp.Elements[1], 2, "*", 2)
 	checkIsValidInfixExpression(t, exp.Elements[2], 3, "+", 3)
+
+	input = "[]"
+	_, program = initParserProgram(t, input)
+	stmt = checkIsExpressionStatements(t, program, 1)
+	exp = stmt.ExpressionValue.(*ast.ArrayLiteralExpression)
+	if len(exp.Elements) != 0 {
+		t.Fatalf("len(exp.Elements) not 0, got=%d", len(exp.Elements))
+	}
 }
