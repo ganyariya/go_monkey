@@ -14,6 +14,7 @@ const (
 	STRING_OBJ       = "STRING"
 	BUILTIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
+	HASH_OBJ         = "HASH"
 )
 
 type ObjectType string
@@ -22,4 +23,11 @@ type Object interface {
 	Type() ObjectType // オブジェクトのタイプを表す
 	Inspect() string  // オブジェクトがラップしている値を表す
 	AsBool() bool     // オブジェクトの真偽値
+}
+
+/*
+ハッシュ可能オブジェクトの共通インターフェース
+*/
+type Hashable interface {
+	HashKey() HashKey
 }
