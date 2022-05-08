@@ -178,3 +178,18 @@ func (i *IndexExpression) TokenLiteral() string { return i.Token.Literal }
 func (i *IndexExpression) String() string {
 	return fmt.Sprintf("(%s[%s])", i.Left.String(), i.Index.String())
 }
+
+type HashLiteralExpression struct {
+	Token token.Token // token.LBRACE
+	Pairs map[Expression]Expression
+}
+
+func (h *HashLiteralExpression) expressionNode()      {}
+func (h *HashLiteralExpression) TokenLiteral() string { return h.Token.Literal }
+func (h *HashLiteralExpression) String() string {
+	pairs := []string{}
+	for k, v := range h.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s:%s", k.String(), v.String()))
+	}
+	return fmt.Sprintf("{%s}", strings.Join(pairs, ", "))
+}

@@ -128,6 +128,19 @@ func checkIsBooleanExpression(t *testing.T, e ast.Expression, value bool) bool {
 	return true
 }
 
+func checkIsStringLiteralExpression(t *testing.T, e ast.Expression, value string) bool {
+	sle, ok := e.(*ast.StringLiteralExpression)
+	if !ok {
+		t.Errorf("ile not *ast.StringLiteralExpression. got=%T", e)
+		return false
+	}
+	if sle.Value != value {
+		t.Errorf("ile.Value not %s. got=%s", value, sle.Value)
+		return false
+	}
+	return true
+}
+
 // 与えられた式が IdentifierExpression かテストする Helper
 func checkIsIdentifierExpression(t *testing.T, exp ast.Expression, value string) bool {
 	ident, ok := exp.(*ast.IdentifierExpression)
