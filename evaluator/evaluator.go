@@ -38,6 +38,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalFunctionExpression(node, env)
 	case *ast.CallExpression:
 		return evalCallExpression(node, env)
+	case *ast.ArrayLiteralExpression:
+		return evalArrayLiteralExpression(node, env)
 	}
 	return nil
 }

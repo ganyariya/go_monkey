@@ -260,3 +260,27 @@ func TestStringLiteralExpression(t *testing.T) {
 		checkStringObject(t, evaluated, tt.expected, tt.input)
 	}
 }
+
+func TestArrayLiteralExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []int64
+	}{
+		{"[1, 2 * 2, 3 + 3]", []int64{1, 4, 6}},
+		{"[1, 2 * 2, fn(x, y){x+y}(1, 2)]", []int64{1, 4, 3}},
+	}
+
+	for _, tt := range tests {
+		evaluated := callEval(tt.input)
+		arr, ok := evaluated.(*object.Array)
+		if !ok {
+			t.Fatalf("object is not Array. got=%T", evaluated)
+		}
+		if len(arr.Elements) != 3 {
+			t.Fatalf("len(elements) not 3. got=%d", len(arr.Elements))
+		}
+		for i := 0; i < 3; i++ {
+			checkIntegerObject(t, arr.Elements[i], tt.expected[i], tt.input)
+		}
+	}
+}

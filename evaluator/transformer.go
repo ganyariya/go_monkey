@@ -161,11 +161,19 @@ func evalCallExpression(exp *ast.CallExpression, env *object.Environment) object
 	if isError(fnObj) {
 		return fnObj
 	}
-	args := evalCallExpressionArguments(exp.Arguments, env)
+	args := evalExpressions(exp.Arguments, env)
 	if len(args) == 1 && isError(args[0]) {
 		return args[0]
 	}
 	return applyCallFunction(fnObj, args)
+}
+
+func evalArrayLiteralExpression(exp *ast.ArrayLiteralExpression, env *object.Environment) object.Object {
+	elements := evalExpressions(exp.Elements, env)
+	if len(elements) == 1 && isError(elements[0]) {
+		return elements[0]
+	}
+	return &object.Array{Elements: elements}
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -228,11 +236,11 @@ func evalStringInfixExpression(operator string, left, right object.Object) objec
 // ------------------------------------------------------------------------------------------------------------
 
 /*
-add(2, 4 + 10) のような関数呼び出しにおける「引数」を評価して object の配列に変換する
+引数や Array などで出現する 「式の列」を「Object の配列」に評価する
 */
-func evalCallExpressionArguments(argExps []ast.Expression, env *object.Environment) []object.Object {
+func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
 	var ret []object.Object
-	for _, exp := range argExps {
+	for _, exp := range exps {
 		evaluated := Eval(exp, env)
 		if isError(evaluated) {
 			return []object.Object{evaluated}
