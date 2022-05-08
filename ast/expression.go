@@ -146,3 +146,18 @@ func (ce *CallExpression) String() string {
 	}
 	return fmt.Sprintf("%s(%s)", ce.Function.String(), strings.Join(args, ", "))
 }
+
+type ArrayLiteralExpression struct {
+	Token    token.Token // token.LBRACKET
+	Elements []Expression
+}
+
+func (a *ArrayLiteralExpression) expressionNode()      {}
+func (a *ArrayLiteralExpression) TokenLiteral() string { return a.Token.Literal }
+func (a *ArrayLiteralExpression) String() string {
+	elements := []string{}
+	for _, e := range a.Elements {
+		elements = append(elements, e.String())
+	}
+	return fmt.Sprintf("[%s]", strings.Join(elements, ", "))
+}

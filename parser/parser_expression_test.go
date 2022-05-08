@@ -257,3 +257,22 @@ func TestCallExpressionParsing(t *testing.T) {
 	checkIsValidInfixExpression(t, exp.Arguments[1], 2, "*", 3)
 	checkIsValidInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }
+
+func TestArrayLiteralExpression(t *testing.T) {
+	input := "[1, 2 * 2, 3 + 3];"
+	_, program := initParserProgram(t, input)
+	stmt := checkIsExpressionStatements(t, program, 1)
+
+	exp, ok := stmt.ExpressionValue.(*ast.ArrayLiteralExpression)
+	if !ok {
+		t.Fatalf("exp not ArrayLiteralExpression. got=%T", stmt.ExpressionValue)
+	}
+
+	if len(exp.Elements) != 3 {
+		t.Fatalf("len(exp.Elements) not 3, got=%d", len(exp.Elements))
+	}
+
+	checkIsIntegerLiteralExpression(t, exp.Elements[0], 1)
+	checkIsValidInfixExpression(t, exp.Elements[1], 2, "*", 2)
+	checkIsValidInfixExpression(t, exp.Elements[2], 3, "+", 3)
+}
