@@ -284,3 +284,19 @@ func TestArrayLiteralExpression(t *testing.T) {
 		t.Fatalf("len(exp.Elements) not 0, got=%d", len(exp.Elements))
 	}
 }
+
+func TestParsingArrayIndexExpressions(t *testing.T) {
+	input := "myArray[1+1];"
+	_, program := initParserProgram(t, input)
+	stmt := checkIsExpressionStatements(t, program, 1)
+	exp, ok := stmt.ExpressionValue.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("exp not IndexExpression. got=%T", stmt.ExpressionValue)
+	}
+	if !checkIsIdentifierExpression(t, exp.Left, "myArray") {
+		return
+	}
+	if !checkIsValidInfixExpression(t, exp.Index, 1, "+", 1) {
+		return
+	}
+}

@@ -161,3 +161,20 @@ func (a *ArrayLiteralExpression) String() string {
 	}
 	return fmt.Sprintf("[%s]", strings.Join(elements, ", "))
 }
+
+/*
+Infix Type
+Left に「Array」や「Arrayを指す識別子」「Arrayを返す即時関数」を含む
+*/
+type IndexExpression struct {
+	Token token.Token // token.LBRACKET
+	/* 任意の式（ただし構文解析＋評価された結果　配列となる必要がある）*/
+	Left  Expression
+	Index Expression
+}
+
+func (i *IndexExpression) expressionNode()      {}
+func (i *IndexExpression) TokenLiteral() string { return i.Token.Literal }
+func (i *IndexExpression) String() string {
+	return fmt.Sprintf("(%s[%s])", i.Left.String(), i.Index.String())
+}
