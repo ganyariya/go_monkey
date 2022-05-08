@@ -75,11 +75,14 @@ func evalStringLiteralExpression(exp *ast.StringLiteralExpression) object.Object
 }
 
 func evalIdentifierExpression(exp *ast.IdentifierExpression, env *object.Environment) object.Object {
-	obj, ok := env.Get(exp.Value)
-	if !ok {
-		return newError(fmt.Sprintf("identifier not found: %s", exp.Value))
+	if obj, ok := env.Get(exp.Value); ok {
+		return obj
 	}
-	return obj
+	/* 組み込み関数は言語側ではじめから定義されており「識別子（）」で呼び出される */
+	if builtin, ok := builtins[exp.Value]; ok {
+		return builtin
+	}
+	return newError(fmt.Sprintf("identifier not found: %s", exp.Value))
 }
 
 func evalPrefixExpression(exp *ast.PrefixExpression, env *object.Environment) object.Object {
@@ -243,17 +246,17 @@ func evalCallExpressionArguments(argExps []ast.Expression, env *object.Environme
 評価済みの arg objects を function object に与えて関数式を評価する。
 */
 func applyCallFunction(fn object.Object, args []object.Object) object.Object {
-	fnObj, ok := fn.(*object.Function)
-	if !ok {
+	switch fn := fn.(type) {
+	case *object.Function:
+		registeredEnv := registerEnclosedCallEnv(fn, args)
+		evaluated := Eval(fn.Body, registeredEnv)
+		/* Unwrap しないと return 効果が関数をまたいで浮上して実行が途中で停止してしまう */
+		return unwrapReturnValue(evaluated)
+	case *object.Builtin:
+		return fn.Fn(args...)
+	default:
 		return newError("not a function: %s", fn.Type())
 	}
-	registeredEnv := registerEnclosedCallEnv(fnObj, args)
-	evaluated := Eval(fnObj.Body, registeredEnv)
-	/*
-		Unwrap しないと add(1, sub(1, 20)) で add(1, Return(-19)) で計算エラーが起きたり
-		return 効果が関数をまたいで浮上して実行が途中で停止してしまう
-	*/
-	return unwrapReturnValue(evaluated)
 }
 
 /*
