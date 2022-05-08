@@ -284,3 +284,30 @@ func TestArrayLiteralExpression(t *testing.T) {
 		}
 	}
 }
+
+func TestArrayIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"[1, 2, 3][0]", 1},
+		{"[1, 2, 3][1]", 2},
+		{"[1, 2, 3][2]", 3},
+		{"let i = 1; [10, 2][i]", 2},
+		{"let i = 0; [10, 2][i]", 10},
+		{"[1, 2, 3][1+1]", 3},
+		{"let a = [1, 2, 3]; a[2]", 3},
+		{"let a = [1, 2, 3]; a[0] + a[1] + a[2]", 6},
+		{"[1, 2, 3][3]", nil},
+		{"[1, 2, 3][-10]", nil},
+	}
+	for _, tt := range tests {
+		evaluated := callEval(tt.input)
+		integer, ok := tt.expected.(int)
+		if ok {
+			checkIntegerObject(t, evaluated, int64(integer), tt.input)
+		} else {
+			checkNullObject(t, evaluated, tt.input)
+		}
+	}
+}

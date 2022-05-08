@@ -176,6 +176,23 @@ func evalArrayLiteralExpression(exp *ast.ArrayLiteralExpression, env *object.Env
 	return &object.Array{Elements: elements}
 }
 
+func evalIndexExpression(exp *ast.IndexExpression, env *object.Environment) object.Object {
+	left := Eval(exp.Left, env)
+	if isError(left) {
+		return left
+	}
+	index := Eval(exp.Index, env)
+	if isError(index) {
+		return index
+	}
+	switch {
+	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
+		return extractArrayByIndex(left, index)
+	default:
+		return newError("index operator not supported: %s", index.Type())
+	}
+}
+
 // ------------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------
 
@@ -229,6 +246,15 @@ func evalStringInfixExpression(operator string, left, right object.Object) objec
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
+}
+
+func extractArrayByIndex(arr, index object.Object) object.Object {
+	arrObj := arr.(*object.Array)
+	idx := index.(*object.Integer).Value
+	if idx < 0 || int(idx) >= len(arrObj.Elements) {
+		return NULL
+	}
+	return arrObj.Elements[idx]
 }
 
 // ------------------------------------------------------------------------------------------------------------
