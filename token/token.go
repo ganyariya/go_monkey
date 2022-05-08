@@ -34,6 +34,7 @@ const (
 	// デリミタ
 	COMMA     = "COMMA"
 	SEMICOLON = "SEMICOLON"
+	COLON     = "COLON"
 
 	LPAREN   = "LPAREN"
 	RPAREN   = "RPAREN"
