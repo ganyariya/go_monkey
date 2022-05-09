@@ -188,9 +188,32 @@ func evalIndexExpression(exp *ast.IndexExpression, env *object.Environment) obje
 	switch {
 	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
 		return extractArrayByIndex(left, index)
+	case left.Type() == object.HASH_OBJ:
+		return extractHashByIndex(left, index)
 	default:
 		return newError("index operator not supported: %s", index.Type())
 	}
+}
+
+func evalHashLiteralexpression(exp *ast.HashLiteralExpression, env *object.Environment) object.Object {
+	pairs := make(map[object.HashKey]object.HashPair)
+	for expKey, expValue := range exp.Pairs {
+		keyObj := Eval(expKey, env)
+		if isError(keyObj) {
+			return keyObj
+		}
+		hashKeyObj, ok := keyObj.(object.Hashable)
+		if !ok {
+			return newError("unusable as hash key: %s", keyObj.Type())
+		}
+		valueObj := Eval(expValue, env)
+		if isError(valueObj) {
+			return valueObj
+		}
+		hashed := hashKeyObj.HashKey()
+		pairs[hashed] = object.HashPair{Key: keyObj, Value: valueObj}
+	}
+	return &object.Hash{Pairs: pairs}
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -255,6 +278,20 @@ func extractArrayByIndex(arr, index object.Object) object.Object {
 		return NULL
 	}
 	return arrObj.Elements[idx]
+}
+
+func extractHashByIndex(hash, index object.Object) object.Object {
+	hashObj := hash.(*object.Hash)
+	key, ok := index.(object.Hashable)
+	if !ok {
+		return newError("unusable as hash key: %s", index.Type())
+	}
+	pair, ok := hashObj.Pairs[key.HashKey()]
+	if !ok {
+		// ハッシュキーに対応する値がない
+		return NULL
+	}
+	return pair.Value
 }
 
 // ------------------------------------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ganyariya/go_monkey/object"
@@ -300,6 +301,70 @@ func TestArrayIndexExpressions(t *testing.T) {
 		{"let a = [1, 2, 3]; a[0] + a[1] + a[2]", 6},
 		{"[1, 2, 3][3]", nil},
 		{"[1, 2, 3][-10]", nil},
+	}
+	for _, tt := range tests {
+		evaluated := callEval(tt.input)
+		integer, ok := tt.expected.(int)
+		if ok {
+			checkIntegerObject(t, evaluated, int64(integer), tt.input)
+		} else {
+			checkNullObject(t, evaluated, tt.input)
+		}
+	}
+}
+
+func TestHashLiterals(t *testing.T) {
+	input := `
+		let two = "two";
+		{
+			"one": 10 - 9,
+			two: 1 + 1,
+			"thr" + "ee": 6 / 2,
+			4: 4,
+			true: 5,
+			false: 6
+		}
+	`
+	evaluated := callEval(input)
+	result, ok := evaluated.(*object.Hash)
+	if !ok {
+		t.Fatalf("not object.Hash, got=%T", evaluated)
+	}
+
+	expected := map[object.HashKey]int64{
+		(&object.String{Value: "one"}).HashKey():   1,
+		(&object.String{Value: "two"}).HashKey():   2,
+		(&object.String{Value: "three"}).HashKey(): 3,
+		(&object.Integer{Value: 4}).HashKey():      4,
+		(&object.Boolean{Value: true}).HashKey():   5,
+		(&object.Boolean{Value: false}).HashKey():  6,
+	}
+
+	if len(result.Pairs) != len(expected) {
+		t.Fatalf("Hash has wrong num of pairs. got=%d", len(result.Pairs))
+	}
+	i := 0
+	for expectedKey, expectedValue := range expected {
+		pair, ok := result.Pairs[expectedKey]
+		if !ok {
+			t.Fatal("no pair for given key in Pairs")
+		}
+		checkIntegerObject(t, pair.Value, expectedValue, fmt.Sprintf("%d", i))
+	}
+}
+
+func TestHashIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`{"foo": 5}["foo"]`, 5},
+		{`{"foo": 5}["bar"]`, nil},
+		{`let key = "foo"; {key: 5}["foo"]`, 5},
+		{`let key = "foo"; {"foo": 5}[key]`, 5},
+		{`{}["foo"]`, nil},
+		{`{5:5}[5]`, 5},
+		{`{true:5}[true]`, 5},
 	}
 	for _, tt := range tests {
 		evaluated := callEval(tt.input)
