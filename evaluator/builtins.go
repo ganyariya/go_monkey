@@ -1,6 +1,10 @@
 package evaluator
 
-import "github.com/ganyariya/go_monkey/object"
+import (
+	"fmt"
+
+	"github.com/ganyariya/go_monkey/object"
+)
 
 func builtinLen(args ...object.Object) object.Object {
 	if ret := checkArgsLen(1, args...); ret != nil {
@@ -77,12 +81,20 @@ func builtinPush(args ...object.Object) object.Object {
 	return &object.Array{Elements: newElements}
 }
 
+func builtinPuts(args ...object.Object) object.Object {
+	for _, arg := range args {
+		fmt.Println(arg.Inspect())
+	}
+	return NULL
+}
+
 var builtins = map[string]*object.Builtin{
 	"len":   {Fn: builtinLen},
 	"first": {Fn: builtinFirst},
 	"last":  {Fn: builtinLast},
 	"rest":  {Fn: builtinRest},
 	"push":  {Fn: builtinPush},
+	"puts":  {Fn: builtinPuts},
 }
 
 // ------------------------------------------------------------------------------------
