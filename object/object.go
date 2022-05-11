@@ -15,6 +15,7 @@ const (
 	BUILTIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
 	HASH_OBJ         = "HASH"
+	QUOTE_OBJ        = "QUOTE"
 )
 
 type ObjectType string

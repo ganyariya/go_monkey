@@ -152,6 +152,11 @@ func evalFunctionExpression(exp *ast.FunctionExpression, env *object.Environment
 引数にある env = 定義時点での Env
 */
 func evalCallExpression(exp *ast.CallExpression, env *object.Environment) object.Object {
+	/* quote 関数の呼び出しであれば引数を評価させない */
+	if exp.Function.TokenLiteral() == "quote" {
+		return quote(exp.Arguments[0])
+	}
+
 	/*
 		Identifier -> 識別子に対応する関数を取り出す
 		Function -> 関数を直接得る
