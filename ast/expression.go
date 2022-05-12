@@ -193,3 +193,19 @@ func (h *HashLiteralExpression) String() string {
 	}
 	return fmt.Sprintf("{%s}", strings.Join(pairs, ", "))
 }
+
+type MacroExpression struct {
+	Token      token.Token
+	Parameters []*IdentifierExpression
+	Body       *BlockStatement
+}
+
+func (m *MacroExpression) expressionNode()      {}
+func (m *MacroExpression) TokenLiteral() string { return m.Token.Literal }
+func (m *MacroExpression) String() string {
+	params := []string{}
+	for _, p := range m.Parameters {
+		params = append(params, p.String())
+	}
+	return fmt.Sprintf("%s(%s)%s", m.TokenLiteral(), strings.Join(params, ", "), m.Body.String())
+}

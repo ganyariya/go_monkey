@@ -51,6 +51,8 @@ const (
 	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
+
+	MACRO = "MACRO"
 )
 
 /*
@@ -74,6 +76,7 @@ var keywords = map[string]TokenType{
 	"return": RETURN,
 	"true":   TRUE,
 	"false":  FALSE,
+	"macro":  MACRO,
 }
 
 // リテラルの値からその値がキーワードか調べて「タイプ」を返す

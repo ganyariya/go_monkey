@@ -29,6 +29,7 @@ if (5 < 10) {
 "hoge hoge";
 [1, 2];
 {"hello": "world", 1: "one"};
+macro(x, y) {x + y;};
 `
 
 	tests := []struct {
@@ -126,6 +127,19 @@ if (5 < 10) {
 		{token.INT, "1"},
 		{token.COLON, ":"},
 		{token.STRING, "one"},
+		{token.RBRACE, "}"},
+		{token.SEMICOLON, ";"},
+		{token.MACRO, "macro"},
+		{token.LPAREN, "("},
+		{token.IDENTIFIER, "x"},
+		{token.COMMA, ","},
+		{token.IDENTIFIER, "y"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.IDENTIFIER, "x"},
+		{token.PLUS, "+"},
+		{token.IDENTIFIER, "y"},
+		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
 		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
