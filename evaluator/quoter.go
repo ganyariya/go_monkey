@@ -53,11 +53,18 @@ Modify(unquote) で得られる変換された object を ast.Node へさらに�
 func convertObjectToASTNode(obj object.Object) ast.Node {
 	switch obj := obj.(type) {
 	case *object.Integer:
-		t := token.Token{
-			Type:    token.INT,
-			Literal: fmt.Sprintf("%d", obj.Value),
-		}
+		t := token.Token{Type: token.INT, Literal: fmt.Sprintf("%d", obj.Value)}
 		return &ast.IntegerLiteralExpression{Token: t, Value: obj.Value}
+	case *object.Boolean:
+		t := token.Token{}
+		if obj.Value {
+			t = token.Token{Type: token.TRUE, Literal: "true"}
+		} else {
+			t = token.Token{Type: token.FALSE, Literal: "false"}
+		}
+		return &ast.BooleanExpression{Token: t, Value: obj.Value}
+	case *object.Quote:
+		return obj.Node
 	default:
 		return nil
 	}

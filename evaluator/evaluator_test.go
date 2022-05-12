@@ -416,6 +416,11 @@ func TestQuoteUnQuote(t *testing.T) {
 		{"quote(unquote(4 + 4) + unquote(4 + 4))", "(8 + 8)"},
 		{"let x = 8; quote(x)", "x"},
 		{"let x = 8; quote(unquote(x))", "8"},
+		{"quote(unquote(true))", "true"},
+		{"quote(unquote(true == false))", "false"},
+		{"quote(unquote(quote(4 + 4)))", "(4 + 4)"},
+		// クオートしたソースコードを持ち運ぶ（quote されたソースを unquote できれば ast.Node を、他の複数の ast.Node から構成できる）
+		{"let x = quote(4 + 4); quote(unquote(4 + 4) + unquote(x))", "(8 + (4 + 4))"},
 	}
 
 	for _, tt := range tests {
