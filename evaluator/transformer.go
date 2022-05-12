@@ -154,7 +154,7 @@ func evalFunctionExpression(exp *ast.FunctionExpression, env *object.Environment
 func evalCallExpression(exp *ast.CallExpression, env *object.Environment) object.Object {
 	/* quote 関数の呼び出しであれば引数を評価させない */
 	if exp.Function.TokenLiteral() == "quote" {
-		return quote(exp.Arguments[0])
+		return quote(exp.Arguments[0], env)
 	}
 
 	/*
