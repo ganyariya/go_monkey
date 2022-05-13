@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ganyariya/go_monkey/lexer"
 	"github.com/ganyariya/go_monkey/object"
+	"github.com/ganyariya/go_monkey/parser"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
@@ -438,4 +440,56 @@ func TestQuoteUnQuote(t *testing.T) {
 		}
 	}
 
+}
+
+func TestDefineMacros(t *testing.T) {
+	input := `
+	let number = 1;
+	let function = fn(x, y) { x + y; };
+	let mymacro = macro(x, y) { x + y; };
+	`
+
+	env := object.NewEnvironment()
+	program := parser.NewParser(lexer.NewLexer(input)).ParseProgram()
+
+	// 構文解析で得た AST から macro を マクロenv に登録し、AST から削除する
+	DefineMacros(program, env)
+
+	if len(program.Statements) != 2 {
+		t.Fatalf("not 2. got=%d", len(program.Statements))
+	}
+
+	_, ok := env.Get("number")
+	if ok {
+		t.Fatal("number should not be defined")
+	}
+	_, ok = env.Get("function")
+	if ok {
+		t.Fatal("number should not be defined")
+	}
+	obj, ok := env.Get("mymacro")
+	if !ok {
+		t.Fatal("mymacro should be defined")
+	}
+
+	macro, ok := obj.(*object.Macro)
+	if !ok {
+		t.Fatalf("object is not Macro. got=%T", obj)
+	}
+
+	if len(macro.Parameters) != 2 {
+		t.Fatalf("not 2. got=%d", len(macro.Parameters))
+	}
+
+	if macro.Parameters[0].String() != "x" {
+		t.Fatalf("not x")
+	}
+	if macro.Parameters[1].String() != "y" {
+		t.Fatalf("not y")
+	}
+
+	expectedBody := "(x + y)"
+	if macro.Body.String() != expectedBody {
+		t.Fatalf("body is not %q. got=%q", expectedBody, macro.Body.String())
+	}
 }
