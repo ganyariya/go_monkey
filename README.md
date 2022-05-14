@@ -26,6 +26,9 @@ fn(y) {
 }
 >> two(10)
 12
+>> let unless = macro(condition, consequence, alternative) { quote(if (!(unquote(condition))) { unquote(consequence); } else { unquote(alternative); }); };
+>> unless(10 > 5, puts("not greater"), puts("greater"))
+greater
 ```
 
 # 🐒 History
@@ -34,5 +37,5 @@ fn(y) {
 - 2 章: [構文解析](https://github.com/ganyariya/go_monkey/tree/7b5e3786ae233e183379c3f46b9d7f35c5383dae)
 - 3 章: [評価](https://github.com/ganyariya/go_monkey/tree/161db914a9c5092de4a26367578e3a5bcb5edefa)
 - 4 章: [インタプリタの拡張](https://github.com/ganyariya/go_monkey/tree/964938bc166be1145b265a34a4c38d6531beb9f0)
-- 付録:
+- 付録: [マクロ](https://github.com/ganyariya/go_monkey/tree/0218f57aa493a4b25a959ccc0d932227d86fb714)
 
